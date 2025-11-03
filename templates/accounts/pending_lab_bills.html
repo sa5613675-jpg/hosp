@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pending Lab Bills{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-clock-history text-warning"></i> Pending Lab Bills</h2>
+            <p class="text-muted">Lab bills awaiting payment collection</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Bills to Collect ({{ pending_bills.count }})</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Bill #</th>
+                                    <th>Patient</th>
+                                    <th>Phone</th>
+                                    <th>Tests</th>
+                                    <th>Amount</th>
+                                    <th>Created</th>
+                                    <th>Created By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in pending_bills %}
+                                <tr>
+                                    <td><strong class="text-primary">{{ bill.bill_number }}</strong></td>
+                                    <td>{{ bill.patient.name }}</td>
+                                    <td>{{ bill.patient.phone }}</td>
+                                    <td>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-link" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#testsModal{{ bill.id }}">
+                                            {{ bill.tests.count }} test(s)
+                                        </button>
+                                        
+                                        <!-- Modal for test details -->
+                                        <div class="modal fade" id="testsModal{{ bill.id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Tests - {{ bill.bill_number }}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <ul class="list-group">
+                                                            {% for test in bill.tests.all %}
+                                                            <li class="list-group-item d-flex justify-content-between">
+                                                                <span>{{ test.test_name }}</span>
+                                                                <span class="badge bg-success">৳{{ test.price|floatformat:0 }}</span>
+                                                            </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">৳{{ bill.total_amount|floatformat:0 }}</strong>
+                                        {% if bill.discount > 0 %}
+                                        <br><small class="text-muted">(Disc: ৳{{ bill.discount|floatformat:0 }})</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ bill.created_at|date:"M d, g:i A" }}</td>
+                                    <td>{{ bill.created_by.get_full_name }}</td>
+                                    <td>
+                                        <a href="{% url 'accounts:lab_bill_voucher' bill.id %}" 
+                                           class="btn btn-sm btn-info me-1" 
+                                           title="View Voucher">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'accounts:collect_lab_payment' bill.id %}" 
+                                           class="btn btn-sm btn-success" 
+                                           title="Collect Payment">
+                                            <i class="bi bi-cash-coin"></i> Collect
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-success">
+                                        <i class="bi bi-check-circle"></i>
+                                        <h5 class="mt-2">All Lab Bills Collected!</h5>
+                                        <p class="text-muted">No pending bills at the moment.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <a href="{% url 'accounts:receptionist_dashboard' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

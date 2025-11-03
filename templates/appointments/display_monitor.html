@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Monitor - Patient Call System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+    body {
+        background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+        overflow: hidden;
+        font-family: 'Hind Siliguri', 'Segoe UI', Arial, sans-serif;
+    }
+    
+    .display-container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .hospital-header {
+        margin-bottom: 40px;
+        animation: fadeIn 1s;
+    }
+    
+    .hospital-name {
+        font-size: 3.5rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin-bottom: 10px;
+        font-family: 'Tiro Bangla', 'Hind Siliguri', serif;
+    }
+    
+    .hospital-name-english {
+        font-size: 2rem;
+        font-weight: 600;
+        opacity: 0.95;
+        margin-bottom: 15px;
+    }
+    
+    .system-name {
+        font-size: 1.8rem;
+        opacity: 0.9;
+        border-top: 2px solid rgba(255,255,255,0.3);
+        padding-top: 15px;
+        margin-top: 10px;
+    }
+    
+    .patient-display {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 30px;
+        padding: 60px 80px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        min-width: 800px;
+        max-width: 1200px;
+        transform: scale(0.9);
+        opacity: 0;
+        transition: all 0.5s ease;
+    }
+    
+    .patient-display.active {
+        transform: scale(1);
+        opacity: 1;
+    }
+    
+    .waiting-message {
+        font-size: 2.5rem;
+        opacity: 0.7;
+        animation: pulse 2s infinite;
+    }
+    
+    .call-label {
+        font-size: 2rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-bottom: 20px;
+        opacity: 0.8;
+    }
+    
+    .patient-name {
+        font-size: 6rem;
+        font-weight: bold;
+        margin: 30px 0;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+        line-height: 1.2;
+        animation: slideIn 0.8s;
+        transition: all 0.3s ease;
+    }
+    
+    .patient-name.calling {
+        font-size: 7rem;
+        color: #FFD700;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 3px 3px 6px rgba(0,0,0,0.4);
+        animation: pulse-glow 1s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { 
+            transform: scale(1);
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 3px 3px 6px rgba(0,0,0,0.4);
+        }
+        50% { 
+            transform: scale(1.05);
+            text-shadow: 0 0 40px rgba(255, 215, 0, 1), 3px 3px 8px rgba(0,0,0,0.5);
+        }
+    }
+    
+    .serial-number {
+        font-size: 3.5rem;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 20px 40px;
+        border-radius: 20px;
+        display: inline-block;
+        margin: 20px 0;
+        animation: slideIn 0.8s 0.2s backwards;
+    }
+    
+    .doctor-info {
+        font-size: 2.2rem;
+        margin-top: 30px;
+        opacity: 0.9;
+        animation: slideIn 0.8s 0.4s backwards;
+    }
+    
+    .room-number {
+        font-size: 2.8rem;
+        background: rgba(255, 215, 0, 0.3);
+        padding: 15px 30px;
+        border-radius: 15px;
+        display: inline-block;
+        margin-top: 20px;
+        border: 2px solid rgba(255, 215, 0, 0.5);
+        animation: slideIn 0.8s 0.6s backwards;
+    }
+    
+    .timestamp {
+        position: fixed;
+        top: 20px;
+        right: 30px;
+        font-size: 1.5rem;
+        opacity: 0.7;
+    }
+    
+    .status-indicator {
+        position: fixed;
+        top: 20px;
+        left: 30px;
+        font-size: 1.2rem;
+        opacity: 0.7;
+    }
+    
+    .connection-status {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #4ade80;
+        margin-right: 8px;
+        animation: blink 2s infinite;
+    }
+    
+    .connection-status.disconnected {
+        background: #ef4444;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+    }
+    
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+    
+    .footer-info {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+        text-align: center;
+        font-size: 1.2rem;
+        opacity: 0.6;
+    }
+</style>
+</head>
+<body>
+<div class="display-container">
+    <!-- Status Indicator -->
+    <div class="status-indicator">
+        <span class="connection-status" id="connectionStatus"></span>
+        <span id="statusText">Connected</span>
+    </div>
+    
+    <!-- Timestamp -->
+    <div class="timestamp" id="currentTime"></div>
+    
+    <!-- Hospital Header -->
+    <div class="hospital-header">
+        <div class="hospital-name">ইউনিভার্সাল হেলথ সার্ভিসেস এন্ড ডায়াগনস্টিক</div>
+        <div class="hospital-name-english">Universal Health Services & Diagnostic</div>
+        <div class="system-name">🏥 রোগী ডাক ব্যবস্থা • Patient Call System</div>
+    </div>
+    
+    <!-- Patient Display Area -->
+    <div class="patient-display" id="patientDisplay">
+        <div class="waiting-message" id="waitingMessage">
+            <i class="fas fa-hourglass-half"></i><br>
+            পরবর্তী রোগীর জন্য অপেক্ষা চলছে...
+        </div>
+        
+        <div id="patientInfo" style="display: none;">
+            <div class="call-label">
+                <i class="fas fa-bell"></i> এখন রোগী ডাক হচ্ছে • Now Calling
+            </div>
+            <div class="patient-name" id="patientName"></div>
+            <div class="serial-number">
+                <i class="fas fa-ticket-alt"></i> সিরিয়াল: <span id="serialNumber"></span>
+            </div>
+            <div class="doctor-info">
+                <i class="fas fa-user-md"></i> <span id="doctorName"></span>
+            </div>
+            <div class="room-number">
+                <i class="fas fa-door-open"></i> কক্ষ: <span id="roomNumber"></span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer-info">
+        Public Display Monitor • Auto-refresh enabled
+    </div>
+    
+    <!-- Test Button (for demonstration) -->
+    <button id="testVoiceButton" title="Test if speech synthesis works" style="position: fixed; bottom: 100px; right: 20px; padding: 12px 25px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4); z-index: 1000; transition: all 0.3s; font-family: 'Hind Siliguri', sans-serif;">
+        <i class="fas fa-volume-up"></i> Test Voice
+    </button>
+    
+    <button id="testButton" title="Click to test patient call with Bengali announcement" style="position: fixed; bottom: 20px; right: 20px; padding: 15px 30px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4); z-index: 1000; transition: all 0.3s; font-family: 'Hind Siliguri', sans-serif;">
+        <i class="fas fa-vial"></i> পরীক্ষা করুন • Test Call
+    </button>
+</div>
+
+<!-- Audio Element (optional - add audio file if available) -->
+<audio id="chimeSound" preload="auto"></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+console.log('🚀 Display Monitor Script Loading...');
+console.log('  Current URL:', window.location.href);
+console.log('  Protocol:', window.location.protocol);
+console.log('  Host:', window.location.host);
+
+// ========== QUEUE MANAGEMENT SYSTEM ==========
+// Queue to handle multiple simultaneous calls
+let announcementQueue = [];
+let isAnnouncing = false;
+let currentAnnouncementTimeout = null;
+
+async function addToQueue(patientData) {
+    console.log('📥 Adding to queue:', patientData.patient_name);
+    announcementQueue.push(patientData);
+    console.log('📊 Queue length:', announcementQueue.length);
+    
+    // If not currently announcing, process the queue
+    if (!isAnnouncing) {
+        await processQueue();
+    }
+}
+
+async function processQueue() {
+    if (announcementQueue.length === 0) {
+        console.log('✅ Queue empty');
+        isAnnouncing = false;
+        return;
+    }
+    
+    if (isAnnouncing) {
+        console.log('⏳ Already announcing, waiting...');
+        return;
+    }
+    
+    isAnnouncing = true;
+    const data = announcementQueue.shift();
+    console.log('🎯 Processing from queue:', data.patient_name);
+    console.log('📊 Remaining in queue:', announcementQueue.length);
+    
+    try {
+        await displayPatientImmediate(data);
+    } catch (error) {
+        console.error('❌ Error displaying patient:', error);
+    }
+    
+    // Wait for display time to complete (20 seconds as set in displayPatientImmediate)
+    // Then process next in queue
+    console.log('⏰ Waiting for announcement to complete...');
+}
+
+// ========== END QUEUE SYSTEM ==========
+
+// Bengali accent voice configuration
+let bengaliVoice = null;
+let speechSynthesis = window.speechSynthesis;
+
+// Helper utilities for Bengali localization and audio fallbacks
+const BENGALI_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+
+function toBengaliDigits(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    return value.toString().replace(/\d/g, digit => BENGALI_DIGITS[Number(digit)] ?? digit);
+}
+
+function containsBengali(text) {
+    return /[\u0980-\u09FF]/.test(text || '');
+}
+
+function formatSerialForSpeech(serialNumber) {
+    if (serialNumber === null || serialNumber === undefined || serialNumber === '') {
+        return '';
+    }
+    return toBengaliDigits(serialNumber);
+}
+
+function formatSerialForDisplay(serialNumber) {
+    if (serialNumber === null || serialNumber === undefined || serialNumber === '') {
+        return '';
+    }
+    const plain = serialNumber.toString();
+    const bengali = toBengaliDigits(plain);
+    return bengali === plain ? bengali : `${bengali} (${plain})`;
+}
+
+function replaceRoomKeyword(text) {
+    return text.replace(/\broom\b/gi, 'রুম');
+}
+
+function formatRoomForSpeech(roomNumber) {
+    if (!roomNumber) {
+        return 'রুম';
+    }
+    const trimmed = roomNumber.toString().trim();
+    const localized = replaceRoomKeyword(trimmed);
+    return localized.replace(/\d/g, digit => BENGALI_DIGITS[Number(digit)] ?? digit);
+}
+
+function formatRoomForDisplay(roomNumber) {
+    if (!roomNumber) {
+        return '';
+    }
+    return formatRoomForSpeech(roomNumber);
+}
+
+function normalizeDoctorName(name) {
+    if (!name) {
+        return '';
+    }
+    // Keep the name as-is if it's in Bengali (already has ডাঃ prefix)
+    // Remove English prefix only (Dr., DR., Dr)
+    return name.replace(/^(Dr\.?|DR\.?)\s*/i, '').trim();
+}
+
+function shouldForceServerTts(text, isPatientName = false) {
+    if (!text) {
+        return false;
+    }
+    const hasBengali = containsBengali(text);
+    const voiceLang = (bengaliVoice && bengaliVoice.lang) ? bengaliVoice.lang.toLowerCase() : '';
+
+    if (!bengaliVoice) {
+        return hasBengali || isPatientName;
+    }
+
+    if (hasBengali && !voiceLang.startsWith('bn')) {
+        return true;
+    }
+
+    if (isPatientName && hasBengali && voiceLang.startsWith('en')) {
+        return true;
+    }
+
+    return false;
+}
+
+// Initialize Bengali voice
+function initBengaliVoice() {
+    console.log('🎤 initBengaliVoice() called');
+    const voices = speechSynthesis.getVoices();
+    console.log(`📋 Total voices available: ${voices.length}`);
+    
+    // Log all voices
+    voices.forEach((voice, index) => {
+        console.log(`  Voice ${index}: ${voice.name} (${voice.lang})`);
+    });
+    
+    // Try to find Bengali, Hindi, or Indian English voice
+    bengaliVoice = voices.find(voice => 
+        voice.lang === 'bn-IN' || voice.lang === 'bn-BD' || // Bengali voices
+        voice.name.includes('Bengali') ||
+        voice.name.includes('Bangla')
+    );
+    
+    // If no Bengali, try Hindi
+    if (!bengaliVoice) {
+        bengaliVoice = voices.find(voice =>
+            voice.lang === 'hi-IN' ||
+            voice.name.includes('Hindi')
+        );
+    }
+    
+    // If no Hindi, try Indian English
+    if (!bengaliVoice) {
+        bengaliVoice = voices.find(voice =>
+            voice.lang === 'en-IN' ||
+            voice.name.includes('Indian')
+        );
+    }
+    
+    // Finally, use any English voice with good clarity
+    if (!bengaliVoice) {
+        bengaliVoice = voices.find(voice =>
+            voice.lang.startsWith('en-') &&
+            (voice.name.includes('Google') || voice.name.includes('Microsoft'))
+        );
+    }
+    
+    // If no specific voice found, use default but with specific settings
+    if (!bengaliVoice) {
+        bengaliVoice = voices[0]; // Use default voice
+        console.log('⚠️ No Bengali voice found, using default');
+    } else {
+        console.log('✅ Found suitable voice:', bengaliVoice.name);
+    }
+    
+    console.log('Selected voice:', bengaliVoice ? bengaliVoice.name : 'Default');
+}
+
+// Load voices when they're ready
+speechSynthesis.onvoiceschanged = function() {
+    console.log('🔄 Voices changed event triggered');
+    initBengaliVoice();
+};
+console.log('🚀 Initializing voices on page load...');
+initBengaliVoice();
+
+// Ensure voices are ready (resolve when voices list is populated or user interacts)
+function ensureVoicesReady(timeoutMs = 3000) {
+    return new Promise((resolve) => {
+        const voices = speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+            console.log('🎧 Voices already available');
+            return resolve(true);
+        }
+
+        let resolved = false;
+
+        const previousHandler = speechSynthesis.onvoiceschanged;
+
+        function restoreHandler() {
+            if (previousHandler) {
+                speechSynthesis.onvoiceschanged = previousHandler;
+            } else {
+                speechSynthesis.onvoiceschanged = initBengaliVoice;
+            }
+        }
+
+        function onVoicesChanged() {
+            const v = speechSynthesis.getVoices();
+            if (v && v.length > 0 && !resolved) {
+                resolved = true;
+                restoreHandler();
+                console.log('🎧 Voices loaded via onvoiceschanged');
+                resolve(true);
+            }
+        }
+
+        // Listen for voiceschanged event (temporarily override)
+        speechSynthesis.onvoiceschanged = onVoicesChanged;
+
+        // As a fallback, allow a user gesture to unlock speech (click anywhere)
+        function onFirstUserGesture() {
+            if (resolved) return;
+            resolved = true;
+            document.removeEventListener('click', onFirstUserGesture);
+            console.log('🖱️ User gesture detected to unlock speech');
+            resolve(true);
+        }
+        document.addEventListener('click', onFirstUserGesture, { once: true });
+
+        // Timeout fallback
+        setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                console.warn('⏱️ Voice loading timed out - proceeding with available voices');
+                restoreHandler();
+                resolve(true);
+            }
+        }, timeoutMs);
+    });
+}
+
+// Simple in-memory cache so repeated names reuse the same audio bytes
+const ttsCache = new Map();
+
+async function fetchTtsBuffer(text) {
+    if (!text) {
+        throw new Error('No text provided for TTS');
+    }
+
+    if (ttsCache.has(text)) {
+        return ttsCache.get(text);
+    }
+
+    const fetchPromise = fetch(`/appointments/tts/bengali/?text=${encodeURIComponent(text)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`TTS HTTP ${response.status}`);
+            }
+            return response.arrayBuffer();
+        })
+        .catch(error => {
+            console.error('❌ TTS fetch error for text:', text, error);
+            ttsCache.delete(text);
+            throw error;
+        });
+
+    ttsCache.set(text, fetchPromise);
+    return fetchPromise;
+}
+
+async function playTtsFallback(text, isPatientName = false) {
+    console.log('🎧 Using server TTS fallback for:', text);
+
+    try {
+        const buffer = await fetchTtsBuffer(text);
+
+        return await new Promise((resolve) => {
+            const blob = new Blob([buffer], { type: 'audio/mpeg' });
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.volume = 1.0;
+            if (isPatientName) {
+                audio.volume = 1.0; // keep max volume for names
+            }
+
+            audio.onplay = () => console.log('🔊 Server audio STARTED:', text);
+            audio.onended = () => {
+                console.log('✅ Server audio COMPLETED:', text);
+                URL.revokeObjectURL(url);
+                resolve(true);
+            };
+            audio.onerror = (event) => {
+                console.error('❌ Server audio ERROR:', event);
+                URL.revokeObjectURL(url);
+                resolve(false);
+            };
+
+            audio.play().catch(err => {
+                console.error('❌ Server audio play() rejected:', err);
+                URL.revokeObjectURL(url);
+                resolve(false);
+            });
+        });
+    } catch (error) {
+        console.error('❌ Server TTS fetch failed for:', text, error);
+        return false;
+    }
+}
+
+async function speakUsingWebSpeech(text, isPatientName = false) {
+    if (!window.speechSynthesis) {
+        return false;
+    }
+
+    try {
+        await ensureVoicesReady(3000);
+        initBengaliVoice();
+    } catch (err) {
+        console.warn('⚠️ ensureVoicesReady error:', err);
+    }
+
+    return new Promise((resolve) => {
+        let started = false;
+        let finished = false;
+
+        try {
+            const utterance = new SpeechSynthesisUtterance(text);
+            try {
+                // Force Bengali/Hindi language for better Bengali pronunciation
+                utterance.lang = 'hi-IN'; // Hindi works better for Bengali text than en-US
+            } catch (e) {
+                utterance.lang = 'bn-BD';
+            }
+
+            if (bengaliVoice) {
+                utterance.voice = bengaliVoice;
+                console.log('✅ Using voice:', bengaliVoice.name, '(' + bengaliVoice.lang + ')');
+            } else {
+                console.log('⚠️ No specific voice found, using default with hi-IN');
+            }
+
+            // Normal speed for better flow
+            utterance.rate = isPatientName ? 0.90 : 1.0;
+            utterance.pitch = isPatientName ? 1.1 : 1.1;
+            utterance.volume = 1.0;
+
+            utterance.onstart = function() {
+                started = true;
+                console.log('🔊 WebSpeech STARTED:', text);
+            };
+
+            utterance.onend = function() {
+                if (finished) return;
+                finished = true;
+                console.log('✅ WebSpeech COMPLETED:', text);
+                resolve(true);
+            };
+
+            utterance.onerror = function(event) {
+                if (finished) return;
+                finished = true;
+                console.error('❌ WebSpeech ERROR:', event.error, 'for text:', text);
+                resolve(false);
+            };
+
+            speechSynthesis.speak(utterance);
+
+            setTimeout(() => {
+                if (!started && !finished) {
+                    console.warn('⚠️ WebSpeech never started for:', text);
+                    try {
+                        speechSynthesis.cancel();
+                    } catch (cancelErr) {
+                        console.warn('⚠️ speechSynthesis.cancel() failed:', cancelErr);
+                    }
+                    resolve(false);
+                }
+            }, 1500);
+        } catch (error) {
+            console.error('❌ Exception creating WebSpeech utterance:', error);
+            resolve(false);
+        }
+    });
+}
+
+async function speakSegment(text, isPatientName = false) {
+    console.log(`🎤 speakSegment() -> "${text}" (isPatientName: ${isPatientName})`);
+
+    let success = false;
+
+    try {
+        const forceServer = shouldForceServerTts(text, isPatientName);
+
+        if (!forceServer && window.speechSynthesis) {
+            // Add timeout to prevent getting stuck
+            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(false), 5000));
+            const speechPromise = speakUsingWebSpeech(text, isPatientName);
+            success = await Promise.race([speechPromise, timeoutPromise]);
+        }
+
+        if (!success) {
+            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(false), 5000));
+            const fallbackPromise = playTtsFallback(text, isPatientName);
+            success = await Promise.race([fallbackPromise, timeoutPromise]);
+        }
+
+        if (!success) {
+            console.warn('⚠️ Unable to play segment:', text);
+        }
+    } catch (error) {
+        console.error('❌ Error in speakSegment:', error);
+        success = false;
+    }
+
+    // Always wait a minimum time to ensure segments are distinct
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    return success;
+}
+
+// Enhanced function to speak patient call in Bengali with name emphasis
+async function announcePatientInBengali(serialNumber, patientName, roomNumber) {
+    console.log('🔊 announcePatientInBengali() START');
+    console.log('  Serial:', serialNumber);
+    console.log('  Patient:', patientName);
+    console.log('  Room:', roomNumber);
+
+    const patientNameElement = document.getElementById('patientName');
+    if (!patientNameElement) {
+        console.error('❌ Patient name element not found!');
+        return;
+    }
+
+    const serialSpeech = formatSerialForSpeech(serialNumber);
+    const serialSpeechText = serialSpeech || serialNumber || 'উপলব্ধ নয়';
+    const roomSpeech = formatRoomForSpeech(roomNumber);
+    const roomSpeechText = roomSpeech || roomNumber || 'রুম';
+    const patientSpeechText = patientName || 'রোগী';
+
+    // Bengali announcement segments
+    const segments = [
+        { text: 'পরবর্তী রোগী', pauseAfter: 250 },
+        { text: `সিরিয়াল নম্বর ${serialSpeechText}`, pauseAfter: 300 },
+        { 
+            text: patientSpeechText,
+            isName: true,
+            pauseAfter: 250,
+            onBefore: () => {
+                patientNameElement.classList.add('calling');
+                console.log('🌟 NAME HIGHLIGHT ADDED');
+            }
+        },
+        { text: patientSpeechText, isName: true, pauseAfter: 250 },
+        { 
+            text: `অনুগ্রহ করে ${roomSpeechText} এ আসুন`,
+            pauseAfter: 0,
+            onAfter: () => {
+                patientNameElement.classList.remove('calling');
+                console.log('🌟 NAME HIGHLIGHT REMOVED');
+            }
+        }
+    ];
+
+    try {
+        // Cancel any ongoing speech first
+        if (window.speechSynthesis) {
+            speechSynthesis.cancel();
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        for (let i = 0; i < segments.length; i++) {
+            const segment = segments[i];
+            console.log(`▶️ Segment ${i + 1}/${segments.length}:`, segment.text);
+
+            if (segment.onBefore) {
+                try {
+                    segment.onBefore();
+                } catch (beforeErr) {
+                    console.error('❌ onBefore error:', beforeErr);
+                }
+            }
+
+            // Wait for segment to complete
+            const success = await speakSegment(segment.text, !!segment.isName);
+            console.log(`✅ Segment ${i + 1} completed:`, success ? 'SUCCESS' : 'FAILED');
+
+            if (segment.onAfter) {
+                try {
+                    segment.onAfter();
+                } catch (afterErr) {
+                    console.error('❌ onAfter error:', afterErr);
+                }
+            }
+
+            // Add pause between segments
+            if (segment.pauseAfter && i < segments.length - 1) {
+                console.log(`⏸️ Pausing ${segment.pauseAfter}ms before next segment`);
+                await new Promise(resolve => setTimeout(resolve, segment.pauseAfter));
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error during announcement sequence:', error);
+    } finally {
+        patientNameElement.classList.remove('calling');
+    }
+
+    console.log('✅ Announcement finished');
+}
+
+// WebSocket connection
+let socket = null;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 10;
+
+function connectWebSocket() {
+    // Determine WebSocket protocol
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/display/`;
+    
+    console.log('Connecting to WebSocket:', wsUrl);
+    
+    try {
+        socket = new WebSocket(wsUrl);
+        
+        socket.onopen = function(e) {
+            console.log('WebSocket connected');
+            reconnectAttempts = 0;
+            updateConnectionStatus(true);
+        };
+        
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Received message:', data);
+            
+            if (data.type === 'patient_called') {
+                displayPatient(data);
+            }
+        };
+        
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            updateConnectionStatus(false);
+        };
+        
+        socket.onclose = function(e) {
+            console.log('WebSocket closed');
+            updateConnectionStatus(false);
+            
+            // Attempt to reconnect
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                console.log(`Reconnecting in ${delay}ms... (attempt ${reconnectAttempts})`);
+                setTimeout(connectWebSocket, delay);
+            }
+        };
+    } catch (error) {
+        console.error('Failed to create WebSocket:', error);
+        updateConnectionStatus(false);
+    }
+}
+
+// Display patient information - ADD TO QUEUE
+function displayPatient(data) {
+    console.log('🎬 displayPatient() called - adding to queue');
+    addToQueue(data);
+}
+
+// Display patient immediately (called from queue processor)
+async function displayPatientImmediate(data) {
+    console.log('🎬 displayPatientImmediate() called with data:', data);
+    
+    const patientName = (data.patient_name && data.patient_name.trim()) ||
+        (data.patient_full_name && data.patient_full_name.trim()) ||
+        (data.patient && (data.patient.full_name || data.patient.name)) ||
+        'Patient';
+    const serialNumberRaw = data.queue_number ?? data.serial_number ?? data.serial ?? '';
+    const doctorNameRaw = data.doctor_name || (data.doctor && (data.doctor.name_bengali || data.doctor.name)) || 'Doctor';
+    const roomNumberRaw = data.room_number || data.room || 'Consultation Room';
+
+    const serialNumberDisplay = formatSerialForDisplay(serialNumberRaw) || serialNumberRaw || 'N/A';
+    const doctorNameDisplay = normalizeDoctorName(doctorNameRaw) || doctorNameRaw;
+    const roomNumberDisplay = formatRoomForDisplay(roomNumberRaw) || roomNumberRaw;
+    
+    console.log('📝 Extracted values:');
+    console.log('  - Patient:', patientName);
+    console.log('  - Serial:', serialNumberRaw);
+    console.log('  - Doctor:', doctorNameRaw);
+    console.log('  - Room:', roomNumberRaw);
+    
+    // Update display elements
+    const patientNameElement = document.getElementById('patientName');
+    const serialNumberElement = document.getElementById('serialNumber');
+    const doctorNameElement = document.getElementById('doctorName');
+    const roomNumberElement = document.getElementById('roomNumber');
+    
+    if (!patientNameElement) {
+        console.error('❌ Patient name element not found!');
+        isAnnouncing = false;
+        processQueue(); // Try next in queue
+        return;
+    }
+    
+    patientNameElement.textContent = patientName;
+    serialNumberElement.textContent = serialNumberDisplay;
+    doctorNameElement.textContent = doctorNameDisplay;
+    roomNumberElement.textContent = roomNumberDisplay;
+    
+    console.log('✅ Display elements updated');
+    
+    // Hide waiting message, show patient info
+    document.getElementById('waitingMessage').style.display = 'none';
+    document.getElementById('patientInfo').style.display = 'block';
+    
+    console.log('✅ Visibility toggled');
+    
+    // Add active class with animation
+    const displayElement = document.getElementById('patientDisplay');
+    displayElement.classList.add('active');
+    
+    console.log('✅ Animation class added');
+    
+    // Play chime sound if available
+    const chimeSound = document.getElementById('chimeSound');
+    if (chimeSound && chimeSound.src) {
+        chimeSound.play().catch(err => console.log('Chime sound error:', err));
+    }
+    
+    // USE ENHANCED BENGALI ANNOUNCEMENT WITH NAME EMPHASIS
+    setTimeout(async () => {
+        // Call the enhanced Bengali announcement function
+        try {
+            await announcePatientInBengali(serialNumberRaw, patientName, roomNumberRaw);
+            console.log('✅ Announcement completed successfully');
+        } catch (err) {
+            console.error('❌ Announcement error:', err);
+        }
+        
+        // Log for debugging
+        console.log('=== ENHANCED BENGALI ANNOUNCEMENT ===');
+        console.log('Serial:', serialNumberRaw);
+        console.log('Patient Name:', patientName, '(WILL BE CALLED TWICE)');
+        console.log('Room:', roomNumberRaw);
+        console.log('=====================================');
+    }, 200);
+    
+    // Clear any existing timeout
+    if (currentAnnouncementTimeout) {
+        clearTimeout(currentAnnouncementTimeout);
+    }
+    
+    // Hide after 20 seconds (extended for longer announcement)
+    currentAnnouncementTimeout = setTimeout(() => {
+        displayElement.classList.remove('active');
+        setTimeout(() => {
+            document.getElementById('waitingMessage').style.display = 'block';
+            document.getElementById('patientInfo').style.display = 'none';
+            
+            // Mark announcement as complete and process next in queue
+            console.log('✅ Display finished, checking queue...');
+            isAnnouncing = false;
+            processQueue();
+        }, 500);
+    }, 20000);
+}
+
+// Update connection status indicator
+function updateConnectionStatus(connected) {
+    const statusIndicator = document.getElementById('connectionStatus');
+    const statusText = document.getElementById('statusText');
+    
+    if (connected) {
+        statusIndicator.classList.remove('disconnected');
+        statusText.textContent = 'Connected';
+    } else {
+        statusIndicator.classList.add('disconnected');
+        statusText.textContent = 'Disconnected';
+    }
+}
+
+// Update clock
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true 
+    });
+    const dateString = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    document.getElementById('currentTime').innerHTML = `
+        <div style="font-size: 1.8rem; font-weight: bold;">${timeString}</div>
+        <div style="font-size: 1rem; margin-top: 5px;">${dateString}</div>
+    `;
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📋 DOMContentLoaded event fired');
+    console.log('Display Monitor initialized');
+    
+    // Start clock
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    console.log('⏰ Clock initialized');
+    
+    // Connect WebSocket
+    console.log('🔌 Attempting WebSocket connection...');
+    connectWebSocket();
+    
+    // Test button functionality
+    const testButton = document.getElementById('testButton');
+    
+    if (!testButton) {
+        console.error('Test button not found!');
+    } else {
+        console.log('✅ Test button found and initialized');
+        
+        let testClickCount = 0;
+        
+        // Bengali patient names for testing
+        const testPatients = [
+            { name: 'আব্দুল করিম', serial: '5', doctor: 'ডাঃ রহমান আহমেদ', room: 'রুম ৩' },
+            { name: 'ফাতেমা খাতুন', serial: '12', doctor: 'ডাঃ নাসরিন সুলতানা', room: 'রুম ১' },
+            { name: 'মোহাম্মদ রাকিব', serial: '8', doctor: 'ডাঃ কামাল হোসেন', room: 'রুম ২' },
+            { name: 'সালমা বেগম', serial: '3', doctor: 'ডাঃ শাহিদা আক্তার', room: 'রুম ৪' },
+            { name: 'রফিকুল ইসলাম', serial: '15', doctor: 'ডাঃ জাহিদ হাসান', room: 'রুম ৫' }
+        ];
+        
+        testButton.addEventListener('click', function() {
+            console.log('🎯 TEST BUTTON CLICKED!');
+            
+            // Get current test patient
+            const patient = testPatients[testClickCount % testPatients.length];
+            testClickCount++;
+            
+            console.log('📋 Test Patient Data:', patient);
+            
+            // Animate button
+            testButton.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                testButton.style.transform = 'scale(1)';
+            }, 100);
+            
+            // Call the display function with proper data structure
+            displayPatient({
+                patient_name: patient.name,
+                queue_number: patient.serial,
+                serial_number: patient.serial,
+                doctor_name: patient.doctor,
+                room_number: patient.room
+            });
+            
+            console.log('✅ Display function called successfully');
+        });
+        
+        // Hover effect for test button
+        testButton.addEventListener('mouseenter', function() {
+            testButton.style.background = 'linear-gradient(135deg, #218838 0%, #1ea77d 100%)';
+            testButton.style.transform = 'scale(1.05)';
+            testButton.style.boxShadow = '0 6px 16px rgba(40, 167, 69, 0.6)';
+        });
+        
+        testButton.addEventListener('mouseleave', function() {
+            testButton.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+            testButton.style.transform = 'scale(1)';
+            testButton.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.4)';
+        });
+        
+        console.log('✅ Test button event listeners attached');
+    }
+    
+    // Test Voice Button - Simple speech test
+    const testVoiceButton = document.getElementById('testVoiceButton');
+    if (testVoiceButton) {
+        testVoiceButton.addEventListener('click', async function() {
+            console.log('🔊 TEST VOICE BUTTON CLICKED!');
+            
+            // Animate button
+            testVoiceButton.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                testVoiceButton.style.transform = 'scale(1)';
+            }, 100);
+            
+            try {
+                await speakSegment('এটি একটি বাংলা পরীক্ষা কল', false);
+                await new Promise(resolve => setTimeout(resolve, 200));
+                await speakSegment('সালমা বেগম', true);
+            } catch (err) {
+                console.error('❌ Test voice sequence failed:', err);
+            }
+        });
+        
+        // Hover effects
+        testVoiceButton.addEventListener('mouseenter', function() {
+            testVoiceButton.style.background = 'linear-gradient(135deg, #0056b3 0%, #003d82 100%)';
+            testVoiceButton.style.transform = 'scale(1.05)';
+        });
+        
+        testVoiceButton.addEventListener('mouseleave', function() {
+            testVoiceButton.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+            testVoiceButton.style.transform = 'scale(1)';
+        });
+        
+        console.log('✅ Test Voice button event listeners attached');
+    }
+    
+    // Test announcement button (for testing only - remove in production)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'T' || e.key === 't') {
+            // Test announcement
+            displayPatient({
+                patient_name: 'Rakib Ahmed',
+                serial_number: '5',
+                doctor_name: 'Karim Hassan',
+                room_number: 'Room 3'
+            });
+        }
+    });
+    
+    console.log('Press T to test announcement');
+});
+
+// Prevent sleep mode
+let wakeLock = null;
+if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(lock => {
+        wakeLock = lock;
+        console.log('Screen wake lock activated');
+    }).catch(err => {
+        console.log('Wake lock error:', err);
+    });
+}
+</script>
+</body>
+</html>

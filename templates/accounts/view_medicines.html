@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Medicines - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .medicine-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .low-stock {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
+    .out-of-stock {
+        background-color: #f8d7da;
+        border-left: 4px solid #dc3545;
+    }
+    .stock-badge {
+        padding: 5px 10px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+    }
+    .badge-low { background-color: #ffc107; color: #000; }
+    .badge-out { background-color: #dc3545; color: #fff; }
+    .badge-ok { background-color: #28a745; color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="bi bi-capsule text-success"></i> All Medicines</h2>
+                    <p class="text-muted">View and manage your pharmacy inventory</p>
+                </div>
+                <div>
+                    <a href="{% url 'accounts:pharmacy_management' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                    <a href="{% url 'accounts:add_medicine' %}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Add New Medicine
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form method="GET" class="d-flex">
+                <input type="text" class="form-control" name="search" 
+                       placeholder="Search by brand name, generic name, or code..." 
+                       value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary ms-2">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </form>
+        </div>
+        <div class="col-md-6 text-end">
+            <span class="text-muted">Total medicines: <strong>{{ medicines.count }}</strong></span>
+        </div>
+    </div>
+
+    <!-- Medicines List -->
+    <div class="row">
+        {% for medicine in medicines %}
+        <div class="col-md-6 col-lg-4">
+            <div class="medicine-card {% if medicine.quantity_in_stock == 0 %}out-of-stock{% elif medicine.quantity_in_stock <= medicine.reorder_level %}low-stock{% endif %}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h5 class="mb-1">{{ medicine.brand_name }}</h5>
+                        <small class="text-muted">{{ medicine.generic_name }}</small>
+                    </div>
+                    <span class="stock-badge 
+                        {% if medicine.quantity_in_stock == 0 %}badge-out{% elif medicine.quantity_in_stock <= medicine.reorder_level %}badge-low{% else %}badge-ok{% endif %}">
+                        {% if medicine.quantity_in_stock == 0 %}Out of Stock
+                        {% elif medicine.quantity_in_stock <= medicine.reorder_level %}Low Stock
+                        {% else %}In Stock{% endif %}
+                    </span>
+                </div>
+                
+                <div class="mb-2">
+                    <span class="badge bg-secondary">{{ medicine.get_form_display }}</span>
+                    <span class="badge bg-info text-dark">{{ medicine.strength }}</span>
+                    <small class="text-muted ms-2">Code: {{ medicine.drug_code }}</small>
+                </div>
+                
+                <hr>
+                
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <small class="text-muted">Buy Price</small>
+                        <div><strong>৳{{ medicine.buy_price }}</strong></div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Sell Price</small>
+                        <div><strong class="text-success">৳{{ medicine.selling_price }}</strong></div>
+                    </div>
+                </div>
+                
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <small class="text-muted">Stock</small>
+                        <div><strong>{{ medicine.quantity_in_stock }}</strong> units</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Profit/Unit</small>
+                        <div><strong class="text-info">৳{{ medicine.profit_per_unit|floatformat:2 }}</strong></div>
+                    </div>
+                </div>
+                
+                {% if medicine.manufacturer %}
+                <div class="mb-2">
+                    <small class="text-muted"><i class="bi bi-building"></i> {{ medicine.manufacturer }}</small>
+                </div>
+                {% endif %}
+                
+                {% if medicine.expiry_date %}
+                <div class="mb-2">
+                    <small class="text-muted"><i class="bi bi-calendar-x"></i> Expires: {{ medicine.expiry_date }}</small>
+                </div>
+                {% endif %}
+                
+                <div class="mt-3 d-flex gap-2">
+                    <a href="{% url 'accounts:edit_medicine' medicine.id %}" class="btn btn-sm btn-warning flex-fill">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-sm btn-danger" 
+                            onclick="confirmDelete('{{ medicine.id }}', '{{ medicine.brand_name }}')">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i> No medicines found. 
+                <a href="{% url 'accounts:add_medicine' %}" class="alert-link">Add your first medicine</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="medicine-name"></strong>?</p>
+                <p class="text-danger"><i class="bi bi-warning"></i> This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirm-delete-btn" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(medicineId, medicineName) {
+    document.getElementById('medicine-name').textContent = medicineName;
+    document.getElementById('confirm-delete-btn').href = `/accounts/delete-medicine/${medicineId}/`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

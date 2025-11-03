@@ -1,0 +1,384 @@
+{% extends 'base.html' %}{% extends 'base.html' %}
+
+{% load static %}{% load static %}
+
+
+
+{% block title %}Collect Lab Payment{% endblock %}{% block title %}Collect Lab Payment{% endblock %}
+
+
+
+{% block extra_css %}{% block content %}
+
+<style><div class="container mt-4">
+
+    .amount-display {    <div class="row mb-4">
+
+        font-size: 1.5rem;        <div class="col-12">
+
+        font-weight: bold;            <h2><i class="bi bi-cash-coin text-success"></i> Collect Lab Payment</h2>
+
+    }            <p class="text-muted">Collect payment for lab bill</p>
+
+    .discount-info {        </div>
+
+        background-color: #fff3cd;    </div>
+
+        padding: 10px;
+
+        border-radius: 5px;    <div class="row">
+
+        margin: 10px 0;        <div class="col-md-8 offset-md-2">
+
+    }            <!-- Bill Details -->
+
+    .original-amount {            <div class="card mb-4">
+
+        text-decoration: line-through;                <div class="card-header bg-info text-white">
+
+        color: #6c757d;                    <h6 class="mb-0"><i class="bi bi-receipt"></i> Bill Details</h6>
+
+    }                </div>
+
+</style>                <div class="card-body">
+
+{% endblock %}                    <div class="row mb-3">
+
+                        <div class="col-6">
+
+{% block content %}                            <p><strong>Bill Number:</strong> {{ lab_bill.bill_number }}</p>
+
+<div class="container mt-4">                            <p><strong>Patient:</strong> {{ lab_bill.patient.name }}</p>
+
+    <div class="row mb-3">                            <p><strong>Phone:</strong> {{ lab_bill.patient.phone }}</p>
+
+        <div class="col-12">                        </div>
+
+            <h2><i class="bi bi-cash-coin text-success"></i> Collect Lab Payment</h2>                        <div class="col-6 text-end">
+
+            <p class="text-muted">Bill: {{ lab_bill.bill_number }}</p>                            <p><strong>Created:</strong> {{ lab_bill.created_at|date:"d M Y, g:i A" }}</p>
+
+        </div>                            <p><strong>Created By:</strong> {{ lab_bill.created_by.get_full_name }}</p>
+
+    </div>                        </div>
+
+                    </div>
+
+    <div class="row">
+
+        <div class="col-md-8 offset-md-2">                    <hr>
+
+            <div class="card">
+
+                <div class="card-header bg-success text-white">                    <h6 class="text-primary mb-3">Tests Included:</h6>
+
+                    <h5 class="mb-0">Payment Collection - {{ lab_bill.bill_number }}</h5>                    <ul class="list-group mb-3">
+
+                </div>                        {% for test in lab_bill.tests.all %}
+
+                <div class="card-body">                        <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                    <!-- Patient Info -->                            {{ test.test_name }}
+
+                    <div class="mb-3">                            <span class="badge bg-success rounded-pill">৳{{ test.price|floatformat:0 }}</span>
+
+                        <h6>Patient Information</h6>                        </li>
+
+                        <p class="mb-1"><strong>Name:</strong> {{ lab_bill.patient.name }}</p>                        {% endfor %}
+
+                        <p class="mb-1"><strong>Phone:</strong> {{ lab_bill.patient.phone }}</p>                    </ul>
+
+                        <p class="mb-0"><strong>Patient ID:</strong> {{ lab_bill.patient.patient_id }}</p>
+
+                    </div>                    <div class="row">
+
+                        <div class="col-6 offset-6">
+
+                    <hr>                            <table class="table">
+
+                                <tr>
+
+                    <!-- Tests List -->                                    <td><strong>Subtotal:</strong></td>
+
+                    <div class="mb-3">                                    <td class="text-end">৳{{ lab_bill.subtotal|floatformat:0 }}</td>
+
+                        <h6>Lab Tests</h6>                                </tr>
+
+                        <ul class="list-group">                                {% if lab_bill.discount > 0 %}
+
+                            {% for test in lab_bill.tests.all %}                                <tr>
+
+                            <li class="list-group-item d-flex justify-content-between">                                    <td><strong>Discount:</strong></td>
+
+                                <span>{{ test.test_name }}</span>                                    <td class="text-end text-danger">- ৳{{ lab_bill.discount|floatformat:0 }}</td>
+
+                                <span class="badge bg-info">৳{{ test.price|floatformat:0 }}</span>                                </tr>
+
+                            </li>                                {% endif %}
+
+                            {% endfor %}                                <tr class="table-success">
+
+                        </ul>                                    <td><h5><strong>Total to Collect:</strong></h5></td>
+
+                    </div>                                    <td class="text-end"><h5><strong>৳{{ lab_bill.total_amount|floatformat:0 }}</strong></h5></td>
+
+                                </tr>
+
+                    <!-- Amount Summary -->                            </table>
+
+                    <div class="mb-3">                        </div>
+
+                        <div class="d-flex justify-content-between">                    </div>
+
+                            <span>Subtotal:</span>                </div>
+
+                            <span id="subtotal-display">৳{{ lab_bill.subtotal|floatformat:2 }}</span>            </div>
+
+                        </div>
+
+                        <div class="d-flex justify-content-between">            <!-- Payment Form -->
+
+                            <span>Existing Discount:</span>            <div class="card">
+
+                            <span class="text-danger">- ৳{{ lab_bill.discount|floatformat:2 }}</span>                <div class="card-header bg-success text-white">
+
+                        </div>                    <h6 class="mb-0"><i class="bi bi-credit-card"></i> Payment Collection</h6>
+
+                        <div class="d-flex justify-content-between">                </div>
+
+                            <span>Current Total:</span>                <div class="card-body">
+
+                            <span class="amount-display text-primary" id="original-total">৳{{ lab_bill.total_amount|floatformat:2 }}</span>                    <form method="post">
+
+                        </div>                        {% csrf_token %}
+
+                    </div>                        
+
+                        <div class="mb-3">
+
+                    <hr>                            <label for="payment_method" class="form-label"><strong>Payment Method *</strong></label>
+
+                            <select class="form-select form-select-lg" id="payment_method" name="payment_method" required>
+
+                    <!-- Payment Form -->                                <option value="CASH">Cash</option>
+
+                    <form method="post" id="payment-form">                                <option value="CARD">Card</option>
+
+                        {% csrf_token %}                                <option value="MOBILE">Mobile Banking (bKash/Nagad)</option>
+
+                                <option value="OTHER">Other</option>
+
+                        <!-- PC Code Section -->                            </select>
+
+                        <div class="card mb-3 border-primary">                        </div>
+
+                            <div class="card-header bg-primary text-white">
+
+                                <h6 class="mb-0"><i class="bi bi-percent"></i> PC Commission (Optional)</h6>                        <div class="mb-3">
+
+                            </div>                            <label for="paid_amount" class="form-label"><strong>Paid Amount (৳) *</strong></label>
+
+                            <div class="card-body">                            <input type="number" 
+
+                                <div class="row">                                   class="form-control form-control-lg" 
+
+                                    <div class="col-md-6">                                   id="paid_amount" 
+
+                                        <label class="form-label">PC Code</label>                                   name="paid_amount" 
+
+                                        <input type="text"                                    value="{{ lab_bill.total_amount }}" 
+
+                                               name="pc_code"                                    min="0" 
+
+                                               id="pc_code"                                    step="10"
+
+                                               class="form-control"                                    required>
+
+                                               placeholder="Enter PC code"                            <small class="form-text text-muted">Default: ৳{{ lab_bill.total_amount|floatformat:0 }}</small>
+
+                                               list="pc-codes-list">                        </div>
+
+                                        <datalist id="pc-codes-list">
+
+                                            {% for pc in pc_members %}                        <div class="alert alert-info">
+
+                                            <option value="{{ pc.pc_code }}">{{ pc.name }} - {{ pc.commission_percentage }}%</option>                            <i class="bi bi-info-circle"></i>
+
+                                            {% endfor %}                            <strong>Note:</strong> After collecting payment, the bill will be marked as PAID and an income record will be created automatically.
+
+                                        </datalist>                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">                        <div class="d-grid gap-2">
+
+                                        <label class="form-label">Commission Info</label>                            <button type="submit" class="btn btn-success btn-lg">
+
+                                        <div id="pc-info" class="alert alert-info" style="display:none;">                                <i class="bi bi-check-circle"></i> Collect Payment
+
+                                            <strong id="pc-name"></strong><br>                            </button>
+
+                                            <span id="pc-percentage"></span>% commission<br>                            <a href="{% url 'accounts:pending_lab_bills' %}" class="btn btn-secondary">
+
+                                            Amount: <strong id="pc-commission">৳0</strong>                                <i class="bi bi-x-circle"></i> Cancel
+
+                                        </div>                            </a>
+
+                                    </div>                        </div>
+
+                                </div>                    </form>
+
+                            </div>                </div>
+
+                        </div>            </div>
+
+        </div>
+
+                        <!-- Additional Discount Section -->    </div>
+
+                        <div class="card mb-3 border-warning"></div>
+
+                            <div class="card-header bg-warning">{% endblock %}
+
+                                <h6 class="mb-0"><i class="bi bi-tag"></i> Additional Discount</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Discount Amount (৳)</label>
+                                    <input type="number" 
+                                           step="0.01" 
+                                           name="additional_discount" 
+                                           id="additional_discount" 
+                                           class="form-control" 
+                                           value="0"
+                                           min="0"
+                                           max="{{ lab_bill.total_amount }}">
+                                    <small class="text-muted">Enter additional discount to reduce the bill amount</small>
+                                </div>
+
+                                <!-- Discount Summary -->
+                                <div id="discount-summary" style="display:none;" class="discount-info">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Original Amount:</span>
+                                        <span class="original-amount" id="original-display">৳{{ lab_bill.total_amount|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Discount:</span>
+                                        <span class="text-danger" id="total-discount-display">৳0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Final Amount:</strong>
+                                        <strong class="text-success" id="final-amount-display">৳{{ lab_bill.total_amount|floatformat:2 }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="CASH">Cash</option>
+                                <option value="CARD">Card</option>
+                                <option value="MOBILE">Mobile Banking</option>
+                                <option value="INSURANCE">Insurance</option>
+                            </select>
+                        </div>
+
+                        <!-- Final Amount Display -->
+                        <div class="alert alert-success">
+                            <h5 class="mb-0">Amount to Collect: <span id="collect-amount" class="amount-display">৳{{ lab_bill.total_amount|floatformat:2 }}</span></h5>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-lg btn-primary">
+                                <i class="bi bi-cash-coin"></i> Collect Payment & Print Voucher
+                            </button>
+                            <a href="{% url 'accounts:pending_lab_bills' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const subtotal = parseFloat('{{ lab_bill.subtotal }}');
+const existingDiscount = parseFloat('{{ lab_bill.discount }}');
+const originalTotal = parseFloat('{{ lab_bill.total_amount }}');
+
+// PC Members data
+const pcMembers = {
+    {% for pc in pc_members %}
+    '{{ pc.pc_code }}': {
+        name: '{{ pc.name }}',
+        percentage: {{ pc.commission_percentage }}
+    },
+    {% endfor %}
+};
+
+// Calculate and display PC commission
+document.getElementById('pc_code').addEventListener('input', function() {
+    const code = this.value.trim().toUpperCase();
+    const pcInfo = document.getElementById('pc-info');
+    
+    if (pcMembers[code]) {
+        const member = pcMembers[code];
+        const finalAmount = parseFloat(document.getElementById('collect-amount').innerText.replace('৳', ''));
+        const commission = (finalAmount * member.percentage) / 100;
+        
+        document.getElementById('pc-name').innerText = member.name;
+        document.getElementById('pc-percentage').innerText = member.percentage;
+        document.getElementById('pc-commission').innerText = '৳' + commission.toFixed(2);
+        pcInfo.style.display = 'block';
+    } else {
+        pcInfo.style.display = 'none';
+    }
+});
+
+// Calculate final amount when discount changes
+document.getElementById('additional_discount').addEventListener('input', function() {
+    const additionalDiscount = parseFloat(this.value) || 0;
+    const totalDiscount = existingDiscount + additionalDiscount;
+    const finalAmount = subtotal - totalDiscount;
+    
+    // Update displays
+    if (additionalDiscount > 0) {
+        document.getElementById('discount-summary').style.display = 'block';
+        document.getElementById('total-discount-display').innerText = '৳' + totalDiscount.toFixed(2);
+        document.getElementById('final-amount-display').innerText = '৳' + finalAmount.toFixed(2);
+    } else {
+        document.getElementById('discount-summary').style.display = 'none';
+    }
+    
+    document.getElementById('collect-amount').innerText = '৳' + finalAmount.toFixed(2);
+    
+    // Recalculate PC commission if code is entered
+    const pcCode = document.getElementById('pc_code').value.trim().toUpperCase();
+    if (pcMembers[pcCode]) {
+        const member = pcMembers[pcCode];
+        const commission = (finalAmount * member.percentage) / 100;
+        document.getElementById('pc-commission').innerText = '৳' + commission.toFixed(2);
+    }
+});
+
+// Validation
+document.getElementById('payment-form').addEventListener('submit', function(e) {
+    const discount = parseFloat(document.getElementById('additional_discount').value) || 0;
+    if (discount < 0) {
+        e.preventDefault();
+        alert('Discount cannot be negative');
+        return false;
+    }
+    if (discount > originalTotal) {
+        e.preventDefault();
+        alert('Discount cannot be greater than the bill amount');
+        return false;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Medicine{% endblock %}
+
+{% block extra_css %}
+<style>
+    .simple-form {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: block;
+    }
+    .required::after {
+        content: " *";
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <h2><i class="bi bi-capsule-pill text-success"></i> Add New Medicine</h2>
+            <p class="text-muted">Quick add medicine to pharmacy</p>
+        </div>
+    </div>
+
+    <div class="simple-form">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label required">Medicine Name</label>
+                <input type="text" class="form-control form-control-lg" name="brand_name" required 
+                       placeholder="Enter medicine name (e.g., Napa)">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label required">Buy Price (৳)</label>
+                <input type="number" step="0.01" class="form-control form-control-lg" 
+                       name="buy_price" required placeholder="0.00" id="buy-price">
+                <small class="text-muted">Price you pay to supplier</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label required">Selling Price (৳)</label>
+                <input type="number" step="0.01" class="form-control form-control-lg" 
+                       name="selling_price" required placeholder="0.00" id="sell-price">
+                <small class="text-muted">Price you sell to customer</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label required">Quantity</label>
+                <input type="number" class="form-control form-control-lg" 
+                       name="quantity_in_stock" required placeholder="0" value="0">
+                <small class="text-muted">Initial stock quantity</small>
+            </div>
+
+            <!-- Profit Display -->
+            <div id="profit-box" class="alert alert-success" style="display:none;">
+                <strong>Profit per unit:</strong> ৳<span id="profit-value">0.00</span>
+                <span class="float-end">Margin: <strong><span id="margin-value">0</span>%</strong></span>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle"></i> Add Medicine
+                </button>
+                <a href="{% url 'accounts:pharmacy_management' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Auto-calculate profit
+const buyInput = document.getElementById('buy-price');
+const sellInput = document.getElementById('sell-price');
+const profitBox = document.getElementById('profit-box');
+const profitValue = document.getElementById('profit-value');
+const marginValue = document.getElementById('margin-value');
+
+function calculateProfit() {
+    const buy = parseFloat(buyInput.value) || 0;
+    const sell = parseFloat(sellInput.value) || 0;
+    
+    if (buy > 0 && sell > 0) {
+        const profit = sell - buy;
+        const margin = ((profit / buy) * 100).toFixed(1);
+        
+        profitValue.textContent = profit.toFixed(2);
+        marginValue.textContent = margin;
+        profitBox.style.display = 'block';
+        
+        if (profit < 0) {
+            profitBox.className = 'alert alert-danger';
+        } else {
+            profitBox.className = 'alert alert-success';
+        }
+    } else {
+        profitBox.style.display = 'none';
+    }
+}
+
+buyInput.addEventListener('input', calculateProfit);
+sellInput.addEventListener('input', calculateProfit);
+</script>
+{% endblock %}

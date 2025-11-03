@@ -1,0 +1,6 @@
+● nazipuruhs.service - Nazipuruhs Hospital Management System
+     Loaded: loaded (]8;;file://vmi2823196/etc/systemd/system/nazipuruhs.service/etc/systemd/system/nazipuruhs.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: activating (auto-restart) (Result: exit-code) since Thu 2025-10-30 11:12:35 CET; 1s ago
+    Process: 812743 ExecStart=/var/www/hosp/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:8005 --timeout 120 --access-logfile /var/log/nazipuruhs-access.log --error-logfile /var/log/nazipuruhs-error.log hosp.wsgi:application [0;1;31m(code=exited, status=1/FAILURE)[0m
+   Main PID: 812743 (code=exited, status=1/FAILURE)
+        CPU: 181ms

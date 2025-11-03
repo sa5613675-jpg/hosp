@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Appointments - {{ selected_date|date:"d M, Y" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .date-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+    .appointment-table {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .table thead {
+        background: #1e3a8a;
+        color: white;
+    }
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background: #f8f9fa;
+    }
+    .table tbody tr.current-patient {
+        background: #dcfce7 !important;
+        border-left: 5px solid #22c55e;
+    }
+    .btn-call {
+        background: #fbbf24;
+        color: #000;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+    }
+    .btn-call:hover {
+        background: #f59e0b;
+        color: #000;
+    }
+    .btn-add-rx {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        font-weight: 500;
+        border-radius: 6px;
+    }
+    .btn-add-rx:hover {
+        background: #2563eb;
+        color: white;
+    }
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .status-waiting {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .status-called {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .status-done {
+        background: #d1fae5;
+        color: #065f46;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Date Header -->
+    <div class="date-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="bi bi-calendar-day"></i> {{ selected_date|date:"l, d F Y" }}</h2>
+                <p class="mb-0">Total {{ total_patients }} patient{{ total_patients|pluralize }}</p>
+            </div>
+            <div>
+                <a href="{% url 'accounts:doctor_dashboard' %}" class="btn btn-light">
+                    <i class="bi bi-arrow-left"></i> Back to Dates
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="appointment-table">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 8%;">Serial</th>
+                    <th style="width: 20%;">Patient</th>
+                    <th style="width: 13%;">Contact</th>
+                    <th style="width: 10%;">Age/Gender</th>
+                    <th style="width: 10%;">Status</th>
+                    <th style="width: 15%;">Reason</th>
+                    <th style="width: 24%;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if appointments %}
+                    {% for item in appointments %}
+                    <tr {% if item.appointment.status == 'called' or item.appointment.status == 'in_consultation' %}class="current-patient"{% endif %}>
+                        <td>
+                            <h5 class="mb-0 text-primary fw-bold">#{{ item.appointment.serial_number }}</h5>
+                        </td>
+                        <td>
+                            <strong>{{ item.appointment.patient.get_full_name }}</strong><br>
+                            <small class="text-muted">{{ item.appointment.patient.patient_id }}</small>
+                        </td>
+                        <td>
+                            <i class="bi bi-telephone"></i> {{ item.appointment.patient.phone }}
+                        </td>
+                        <td>
+                            {{ item.appointment.patient.age }}y<br>
+                            <small class="text-muted">{{ item.appointment.patient.get_gender_display }}</small>
+                        </td>
+                        <td>
+                            {% if item.appointment.status == 'waiting' %}
+                                <span class="status-badge status-waiting">
+                                    <i class="bi bi-hourglass-split"></i> Waiting
+                                </span>
+                            {% elif item.appointment.status == 'called' or item.appointment.status == 'in_consultation' %}
+                                <span class="status-badge status-called">
+                                    <i class="bi bi-person-check"></i> Current
+                                </span>
+                            {% elif item.appointment.status == 'completed' %}
+                                <span class="status-badge status-done">
+                                    <i class="bi bi-check-circle"></i> Done
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-waiting">
+                                    {{ item.appointment.status|default:"Waiting" }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.appointment.reason %}
+                                <small>{{ item.appointment.reason|truncatewords:5 }}</small>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2 align-items-center">
+                                <!-- Call Button - Show for all non-completed appointments -->
+                                {% if item.appointment.status != 'completed' and item.appointment.status != 'cancelled' %}
+                                    <button onclick="callPatient({{ item.appointment.id }})" 
+                                            class="btn btn-sm btn-call">
+                                        <i class="bi bi-megaphone"></i> Call
+                                    </button>
+                                {% endif %}
+                                
+                                <!-- Add/Edit Prescription -->
+                                {% if item.prescription %}
+                                    <a href="{% url 'appointments:prescription_create' item.appointment.id %}" 
+                                       class="btn btn-sm btn-success">
+                                        <i class="bi bi-pencil"></i> Edit Rx
+                                    </a>
+                                    <a href="{% url 'appointments:prescription_print' item.prescription.pk %}" 
+                                       class="btn btn-sm btn-outline-primary"
+                                       target="_blank">
+                                        <i class="bi bi-printer"></i>
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'appointments:prescription_create' item.appointment.id %}" 
+                                       class="btn btn-sm btn-add-rx">
+                                        <i class="bi bi-file-earmark-medical"></i> Add Prescription
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-calendar-x" style="font-size: 3rem; color: #ccc;"></i>
+                            <h4 class="mt-3 text-muted">No appointments on this date</h4>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function callPatient(appointmentId) {
+    // No confirmation popup - call directly
+    
+    fetch(`/appointments/${appointmentId}/call/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Patient called! Check display monitor.');
+            location.reload();
+        } else {
+            alert('❌ Error: ' + (data.error || 'Failed to call patient'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Network error');
+    });
+}
+</script>
+{% endblock %}

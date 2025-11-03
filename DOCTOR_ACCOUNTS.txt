@@ -1,0 +1,50 @@
+====================================================================================================
+                                    DOCTOR LOGIN CREDENTIALS
+====================================================================================================
+
+Total Doctors: 4 (All duplicates removed, proper accounts created)
+
+----------------------------------------------------------------------------------------------------
+1. ডাঃ খালিদ হোসেন (Dr. Khalid Hosen)
+   Specialization: সার্জন (Surgeon)
+   Phone: 01312025152
+   Username: 01312025152
+   Password: 025152
+   Status: Active ✓
+
+----------------------------------------------------------------------------------------------------
+2. ডাঃ শাকেরা সুলতানা (Dr. Shakera Sultana)
+   Specialization: ক্যান্সার বিশেষজ্ঞ (Cancer Specialist)
+   Phone: 01712765762
+   Username: 01712765762
+   Password: 765762
+   Status: Active ✓
+
+----------------------------------------------------------------------------------------------------
+3. ডাঃ খাজা মোহাম্মদ (Dr. Khaja Mohammad)
+   Specialization: মেডিসিন বিশেষজ্ঞ (Medicine Specialist)
+   Phone: 01761338884
+   Username: 01761338884
+   Password: 338884
+   Status: Active ✓
+
+----------------------------------------------------------------------------------------------------
+4. ডাঃ আয়েশা ছিদ্দিকা (Dr. Ayesha Siddika)
+   Specialization: প্রসূতি ও গাইনী বিশেষজ্ঞ (Gynecologist & Obstetrician)
+   Phone: 01770928782
+   Username: 01770928782
+   Password: 928782
+   Status: Active ✓
+
+====================================================================================================
+
+CHANGES MADE:
+✓ Deleted 4 duplicate doctor accounts (without phone numbers)
+✓ Username = Phone Number (easy to remember)
+✓ Password = Last 6 digits of phone number (simple and secure)
+✓ All accounts are active and ready to use
+
+LOGIN URL: http://your-domain.com/accounts/login/
+
+Date: October 30, 2025
+====================================================================================================

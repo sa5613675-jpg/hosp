@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lab Assistant Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-flask text-primary"></i> Lab Assistant Dashboard</h2>
+            <p class="text-muted">Create lab bills and manage test orders</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6><i class="bi bi-receipt"></i> Today's Bills</h6>
+                    <h3>{{ today_bill_count }}</h3>
+                    <small>৳{{ today_revenue|floatformat:0 }} revenue</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6><i class="bi bi-clock"></i> Pending Bills</h6>
+                    <h3>{{ pending_count }}</h3>
+                    <small>৳{{ pending_amount|floatformat:0 }} pending</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6><i class="bi bi-people"></i> Today's Serials</h6>
+                    <h3>{{ appointments.count }}</h3>
+                    <small>Appointments today</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6><i class="bi bi-clipboard-check"></i> Available Tests</h6>
+                    <h3>{{ available_tests.count }}</h3>
+                    <small>Lab tests</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'accounts:pending_lab_bills' %}" class="btn btn-warning me-2">
+                        <i class="bi bi-clock-history"></i> View Pending Bills ({{ pending_count }})
+                    </a>
+                    <a href="#availableTests" class="btn btn-info">
+                        <i class="bi bi-list-check"></i> View Available Tests
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Today's Appointments/Serials -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="bi bi-calendar-check"></i> Today's Appointments - Create Lab Bill</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Serial #</th>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in appointments %}
+                                <tr>
+                                    <td><strong>#{{ appointment.serial_number }}</strong></td>
+                                    <td>
+                                        {{ appointment.patient.name }}<br>
+                                        <small class="text-muted">{{ appointment.patient.phone }}</small>
+                                    </td>
+                                    <td>Dr. {{ appointment.doctor.get_full_name }}</td>
+                                    <td>{{ appointment.appointment_time|time:"g:i A" }}</td>
+                                    <td>
+                                        {% if appointment.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif appointment.status == 'confirmed' %}
+                                            <span class="badge bg-info">Confirmed</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ appointment.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'accounts:create_lab_bill' appointment.id %}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Create Bill
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No appointments today</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Lab Bills -->
+            <div class="card mt-4">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Pending Lab Bills (Payment Not Collected)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Bill #</th>
+                                    <th>Patient</th>
+                                    <th>Tests</th>
+                                    <th>Amount</th>
+                                    <th>Created</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in pending_bills %}
+                                <tr>
+                                    <td><strong>{{ bill.bill_number }}</strong></td>
+                                    <td>
+                                        {{ bill.patient.name }}<br>
+                                        <small class="text-muted">{{ bill.patient.phone }}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{ bill.tests.count }} test(s)</small>
+                                    </td>
+                                    <td><strong>৳{{ bill.total_amount|floatformat:0 }}</strong></td>
+                                    <td>{{ bill.created_at|date:"M d, g:i A" }}</td>
+                                    <td>
+                                        <a href="{% url 'accounts:lab_bill_voucher' bill.id %}" 
+                                           class="btn btn-sm btn-info">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-success">
+                                        <i class="bi bi-check-circle"></i> All bills collected!
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Lab Tests -->
+        <div class="col-md-4">
+            <div class="card" id="availableTests">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-list-check"></i> Available Lab Tests</h6>
+                </div>
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    {% regroup available_tests by category as test_categories %}
+                    {% for category in test_categories %}
+                        <h6 class="text-primary mt-3">{{ category.grouper }}</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for test in category.list %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ test.test_name }}</strong><br>
+                                    <small class="text-muted">{{ test.test_code }}</small>
+                                </div>
+                                <span class="badge bg-success rounded-pill">৳{{ test.price|floatformat:0 }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reception Billing - Appointment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-cash-stack"></i> Reception Billing - Appointment</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Appointment Details -->
+                    <div class="alert alert-info">
+                        <h5>Appointment: {{ appointment.appointment_number }}</h5>
+                        <p class="mb-0">
+                            <strong>Patient:</strong> {{ appointment.patient.get_full_name }} ({{ appointment.patient.patient_id }})<br>
+                            <strong>Doctor:</strong> Dr. {{ appointment.doctor.get_full_name }}<br>
+                            <strong>Serial:</strong> #{{ appointment.serial_number }}<br>
+                            <strong>Date:</strong> {{ appointment.appointment_date|date:"d M Y" }}
+                        </p>
+                    </div>
+
+                    <!-- Consultation Fee -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5>Consultation Fee: ৳{{ appointment.consultation_fee }}</h5>
+                        </div>
+                    </div>
+
+                    <!-- Billing Form -->
+                    <form method="post" id="billingForm">
+                        {% csrf_token %}
+                        
+                        <hr>
+
+                        <!-- PC Code Section -->
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label"><strong>PC Code / Referral Code (Optional)</strong></label>
+                                <input type="text" name="pc_code" id="pcCode" class="form-control" 
+                                       placeholder="Enter 5-digit PC code (e.g., 10001, 20001)" 
+                                       maxlength="20" style="text-transform: uppercase;">
+                                <small class="text-muted">Enter the unique PC code for commission tracking</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-info w-100" id="verifyPC">
+                                    <i class="bi bi-search"></i> Verify Code
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success" id="pcInfo" style="display: none;">
+                            <h6><i class="bi bi-person-check"></i> PC Member Found!</h6>
+                            <strong>Name:</strong> <span id="pcName"></span><br>
+                            <strong>Code:</strong> <span id="pcCodeDisplay"></span><br>
+                            <strong>Commission:</strong> <span id="pcCommission">0</span>%<br>
+                            <hr class="my-2">
+                            <strong>Commission Amount:</strong> ৳<span id="commissionAmount">0</span><br>
+                            <strong>Admin Revenue:</strong> ৳<span id="adminRevenue">0</span>
+                        </div>
+
+                        <div class="alert alert-danger" id="pcError" style="display: none;">
+                            <i class="bi bi-exclamation-triangle"></i> Invalid or inactive PC code
+                        </div>
+
+                        <!-- Final Amount -->
+                        <div class="alert alert-primary">
+                            <h4 class="mb-0">
+                                <strong>Final Amount to Pay: ৳<span id="finalAmount">{{ appointment.consultation_fee }}</span></strong>
+                            </h4>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle-fill"></i> Confirm Payment & Mark as Paid
+                            </button>
+                            <a href="{% url 'appointments:appointment_detail' appointment.id %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const originalTotal = {{ appointment.consultation_fee }};
+let pcData = null;
+
+// Verify PC Code
+document.getElementById('verifyPC').addEventListener('click', function() {
+    const pcCode = document.getElementById('pcCode').value.trim().toUpperCase();
+    
+    if (!pcCode) {
+        document.getElementById('pcError').style.display = 'none';
+        document.getElementById('pcInfo').style.display = 'none';
+        pcData = null;
+        calculateBilling();
+        return;
+    }
+    
+    fetch(`/accounts/api/pc-lookup/?code=${pcCode}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                pcData = data;
+                document.getElementById('pcInfo').style.display = 'block';
+                document.getElementById('pcError').style.display = 'none';
+                document.getElementById('pcName').textContent = data.name;
+                document.getElementById('pcCodeDisplay').textContent = data.pc_code;
+                document.getElementById('pcCommission').textContent = data.commission_percentage;
+                calculateBilling();
+            } else {
+                pcData = null;
+                document.getElementById('pcInfo').style.display = 'none';
+                document.getElementById('pcError').style.display = 'block';
+                calculateBilling();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            pcData = null;
+            document.getElementById('pcError').textContent = 'Error verifying code';
+            document.getElementById('pcError').style.display = 'block';
+        });
+});
+
+document.getElementById('pcCode').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('verifyPC').click();
+    }
+});
+
+document.getElementById('pcCode').addEventListener('input', function() {
+    if (pcData) {
+        document.getElementById('pcInfo').style.display = 'none';
+        document.getElementById('pcError').style.display = 'none';
+        pcData = null;
+        calculateBilling();
+    }
+});
+
+function calculateBilling() {
+    const commissionPercent = pcData ? parseFloat(pcData.commission_percentage) : 0;
+    
+    // No discount for appointments - use original amount
+    const finalAmount = originalTotal;
+    const commissionAmount = finalAmount * (commissionPercent / 100);
+    const adminRevenue = finalAmount - commissionAmount;
+    
+    document.getElementById('finalAmount').textContent = finalAmount.toFixed(2);
+    
+    if (commissionPercent > 0 && pcData) {
+        document.getElementById('commissionAmount').textContent = commissionAmount.toFixed(2);
+        document.getElementById('adminRevenue').textContent = adminRevenue.toFixed(2);
+    }
+}
+
+calculateBilling();
+
+document.getElementById('billingForm').addEventListener('submit', function(e) {
+    const finalAmount = parseFloat(document.getElementById('finalAmount').textContent);
+    return confirm('Confirm payment of ৳' + finalAmount.toFixed(2) + '?');
+});
+</script>
+
+{% endblock %}

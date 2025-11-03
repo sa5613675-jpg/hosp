@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Medicine - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-section h5 {
+        color: #ffc107;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #ffc107;
+    }
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="bi bi-pencil-square text-warning"></i> Edit Medicine</h2>
+                    <p class="text-muted">Update medicine details</p>
+                </div>
+                <div>
+                    <a href="{% url 'accounts:view_medicines' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Medicines
+                    </a>
+                    <a href="{% url 'accounts:pharmacy_management' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-house"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="form-section">
+            <h5><i class="bi bi-info-circle"></i> Basic Information</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required-field">Drug Code</label>
+                    <input type="text" class="form-control" name="drug_code" required 
+                           placeholder="e.g., MED001" value="{{ medicine.drug_code }}">
+                    <small class="text-muted">Unique identifier for this medicine</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required-field">Brand Name</label>
+                    <input type="text" class="form-control" name="brand_name" required 
+                           placeholder="e.g., Napa" value="{{ medicine.brand_name }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required-field">Generic Name</label>
+                    <input type="text" class="form-control" name="generic_name" required 
+                           placeholder="e.g., Paracetamol" value="{{ medicine.generic_name }}">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" name="category">
+                        <option value="">-- Select Category --</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required-field">Manufacturer</label>
+                    <input type="text" class="form-control" name="manufacturer" required 
+                           placeholder="e.g., Beximco Pharmaceuticals">
+                </div>
+            </div>
+        </div>
+
+        <!-- Form and Dosage -->
+        <div class="form-section">
+            <h5><i class="bi bi-capsule"></i> Form & Dosage</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required-field">Form</label>
+                    <select class="form-select" name="form" required>
+                        <option value="">-- Select Form --</option>
+                        {% for code, label in form_choices %}
+                        <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required-field">Strength</label>
+                    <input type="text" class="form-control" name="strength" required 
+                           placeholder="e.g., 500mg, 10ml">
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="form-section">
+            <h5><i class="bi bi-currency-exchange"></i> Pricing (৳)</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required-field">Buy Price</label>
+                    <input type="number" step="0.01" class="form-control" name="buy_price" required 
+                           placeholder="0.00" onchange="calculateProfit()">
+                    <small class="text-muted">Purchase price from supplier</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Unit Price (Reference)</label>
+                    <input type="number" step="0.01" class="form-control" name="unit_price" 
+                           placeholder="0.00">
+                    <small class="text-muted">Optional cost price</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required-field">Selling Price</label>
+                    <input type="number" step="0.01" class="form-control" name="selling_price" required 
+                           placeholder="0.00" onchange="calculateProfit()">
+                    <small class="text-muted">Price to customer</small>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="alert alert-info" id="profit-display" style="display:none;">
+                        <strong>Profit per unit:</strong> <span id="profit-amount">৳0.00</span> 
+                        (<span id="profit-margin">0%</span>)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock -->
+        <div class="form-section">
+            <h5><i class="bi bi-box-seam"></i> Stock Information</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Initial Stock Quantity</label>
+                    <input type="number" class="form-control" name="quantity_in_stock" value="0" 
+                           placeholder="0">
+                    <small class="text-muted">Starting inventory</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Reorder Level</label>
+                    <input type="number" class="form-control" name="reorder_level" value="10" 
+                           placeholder="10">
+                    <small class="text-muted">Alert when stock falls below</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Batch Number</label>
+                    <input type="text" class="form-control" name="batch_number" 
+                           placeholder="e.g., BATCH2025001">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Expiry Date</label>
+                    <input type="date" class="form-control" name="expiry_date">
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="form-section">
+            <h5><i class="bi bi-text-paragraph"></i> Additional Information</h5>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Description / Notes</label>
+                    <textarea class="form-control" name="description" rows="3" 
+                              placeholder="Usage instructions, side effects, storage conditions, etc."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="row mb-4">
+            <div class="col-12 text-end">
+                <a href="{% url 'accounts:view_medicines' %}" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle"></i> Add Medicine
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function calculateProfit() {
+    const buyPrice = parseFloat(document.querySelector('input[name="buy_price"]').value) || 0;
+    const sellPrice = parseFloat(document.querySelector('input[name="selling_price"]').value) || 0;
+    
+    if (buyPrice > 0 && sellPrice > 0) {
+        const profit = sellPrice - buyPrice;
+        const margin = ((profit / buyPrice) * 100).toFixed(2);
+        
+        document.getElementById('profit-amount').textContent = '৳' + profit.toFixed(2);
+        document.getElementById('profit-margin').textContent = margin + '%';
+        document.getElementById('profit-display').style.display = 'block';
+    }
+}
+</script>
+{% endblock %}

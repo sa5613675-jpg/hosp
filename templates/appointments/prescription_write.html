@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Write Prescription - {{ appointment.patient.get_full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .prescription-form {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-section {
+        border-bottom: 2px solid #e9ecef;
+        padding: 20px 0;
+        margin-bottom: 20px;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+    .section-title i {
+        margin-right: 10px;
+        color: #007bff;
+    }
+    .vitals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+    .medicine-row {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 4px solid #007bff;
+    }
+    .medicine-row .form-label {
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+    .btn-add-medicine {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .btn-add-medicine:hover {
+        background: #218838;
+    }
+    .patient-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .prescription-actions {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 20px;
+        border-top: 2px solid #e9ecef;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-file-medical"></i> Write Prescription</h2>
+        <a href="{% url 'accounts:doctor_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Patient Info Card -->
+    <div class="patient-card">
+        <div class="row">
+            <div class="col-md-6">
+                <h4><i class="bi bi-person-fill"></i> {{ appointment.patient.get_full_name }}</h4>
+                <p class="mb-1"><strong>ID:</strong> {{ appointment.patient.patient_id }}</p>
+                <p class="mb-1"><strong>Age:</strong> {{ appointment.patient.age }} years</p>
+                <p class="mb-0"><strong>Gender:</strong> {{ appointment.patient.get_gender_display }}</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-1"><strong>Serial #:</strong> {{ appointment.serial_number }}</p>
+                <p class="mb-1"><strong>Date:</strong> {{ appointment.appointment_date|date:"d M, Y" }}</p>
+                <p class="mb-0"><strong>Phone:</strong> {{ appointment.patient.phone }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prescription Form -->
+    <form method="POST" id="prescriptionForm">
+        {% csrf_token %}
+        <div class="prescription-form p-4">
+            
+            <!-- Chief Complaint -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-clipboard2-pulse"></i> Chief Complaint
+                </div>
+                <textarea name="chief_complaint" class="form-control" rows="2" 
+                          placeholder="e.g., Fever, Cough, Body Pain">{{ form.chief_complaint.value|default:'' }}</textarea>
+            </div>
+
+            <!-- History -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-clock-history"></i> History
+                </div>
+                <textarea name="history" class="form-control" rows="3" 
+                          placeholder="e.g., Patient complains of fever for 3 days, dry cough...">{{ form.history.value|default:'' }}</textarea>
+            </div>
+
+            <!-- Vitals -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-heart-pulse"></i> Vitals
+                </div>
+                <div class="vitals-grid">
+                    <div>
+                        <label class="form-label">Blood Pressure</label>
+                        <input type="text" name="blood_pressure" class="form-control" 
+                               placeholder="e.g., 140/70 mm Hg" value="{{ form.blood_pressure.value|default:'' }}">
+                    </div>
+                    <div>
+                        <label class="form-label">Pulse</label>
+                        <input type="text" name="pulse" class="form-control" 
+                               placeholder="e.g., 72/min" value="{{ form.pulse.value|default:'' }}">
+                    </div>
+                    <div>
+                        <label class="form-label">Temperature</label>
+                        <input type="text" name="temperature" class="form-control" 
+                               placeholder="e.g., 98.6°F" value="{{ form.temperature.value|default:'' }}">
+                    </div>
+                    <div>
+                        <label class="form-label">Weight</label>
+                        <input type="text" name="weight" class="form-control" 
+                               placeholder="e.g., 60 kg" value="{{ form.weight.value|default:'' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- On Examination -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-stethoscope"></i> On Examination
+                </div>
+                <textarea name="on_examination" class="form-control" rows="3" 
+                          placeholder="Physical examination findings...">{{ form.on_examination.value|default:'' }}</textarea>
+            </div>
+
+            <!-- Diagnosis -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-clipboard-check"></i> Diagnosis <span class="text-danger">*</span>
+                </div>
+                <textarea name="diagnosis" class="form-control" rows="2" required
+                          placeholder="Primary diagnosis (e.g., URTI, Pneumonia)">{{ form.diagnosis.value|default:'' }}</textarea>
+            </div>
+
+            <!-- Investigation -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-clipboard-data"></i> Investigation
+                </div>
+                <textarea name="investigation" class="form-control" rows="3" 
+                          placeholder="Tests ordered (e.g., CBC, X-Ray Chest, ECG, TSH, Creatinine)">{{ form.investigation.value|default:'' }}</textarea>
+            </div>
+
+            <!-- Medicines (Rx) -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-capsule"></i> Prescription (Rx)
+                </div>
+                <div id="medicinesContainer">
+                    {% if formset %}
+                        {{ formset.management_form }}
+                        {% for medicine_form in formset %}
+                            <div class="medicine-row">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Medicine Name</label>
+                                        {{ medicine_form.medicine_name }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Dosage</label>
+                                        {{ medicine_form.dosage }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Frequency</label>
+                                        {{ medicine_form.frequency }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Duration</label>
+                                        {{ medicine_form.duration }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Instructions</label>
+                                        {{ medicine_form.instructions }}
+                                    </div>
+                                </div>
+                                {{ medicine_form.id }}
+                                {% if medicine_form.instance.pk %}
+                                    {{ medicine_form.DELETE }}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Default empty medicine rows -->
+                        <div class="medicine-row">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Medicine Name</label>
+                                    <input type="text" name="medicine_0_name" class="form-control" placeholder="Tab. Paracetamol">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Dosage</label>
+                                    <input type="text" name="medicine_0_dosage" class="form-control" placeholder="500mg">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Frequency</label>
+                                    <input type="text" name="medicine_0_frequency" class="form-control" placeholder="1+0+1">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Duration</label>
+                                    <input type="text" name="medicine_0_duration" class="form-control" placeholder="7 days">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Instructions</label>
+                                    <input type="text" name="medicine_0_instructions" class="form-control" placeholder="After meal">
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <button type="button" class="btn-add-medicine mt-3" onclick="addMedicineRow()">
+                    <i class="bi bi-plus-circle"></i> Add More Medicine
+                </button>
+            </div>
+
+            <!-- Advice -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-info-circle"></i> Advice
+                </div>
+                <textarea name="advice" class="form-control" rows="3" 
+                          placeholder="Doctor's advice (e.g., Take adequate rest, Drink plenty of water)">{{ form.advice.value|default:'' }}</textarea>
+            </div>
+
+            <!-- Follow-up -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-calendar-check"></i> Follow-up Date
+                </div>
+                <input type="date" name="follow_up_date" class="form-control" style="max-width: 300px;"
+                       value="{{ form.follow_up_date.value|default:'' }}">
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="prescription-actions">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'accounts:doctor_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                <div>
+                    <button type="submit" name="action" value="save" class="btn btn-primary btn-lg me-2">
+                        <i class="bi bi-save"></i> Save Prescription
+                    </button>
+                    <button type="submit" name="action" value="save_print" class="btn btn-success btn-lg">
+                        <i class="bi bi-printer"></i> Save & Send to Reception
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let medicineCount = 1;
+
+function addMedicineRow() {
+    const container = document.getElementById('medicinesContainer');
+    const newRow = document.createElement('div');
+    newRow.className = 'medicine-row';
+    newRow.innerHTML = `
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Medicine Name</label>
+                <input type="text" name="medicine_${medicineCount}_name" class="form-control" placeholder="Medicine name">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Dosage</label>
+                <input type="text" name="medicine_${medicineCount}_dosage" class="form-control" placeholder="e.g., 500mg">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Frequency</label>
+                <input type="text" name="medicine_${medicineCount}_frequency" class="form-control" placeholder="e.g., 1+0+1">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Duration</label>
+                <input type="text" name="medicine_${medicineCount}_duration" class="form-control" placeholder="e.g., 7 days">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Instructions</label>
+                <input type="text" name="medicine_${medicineCount}_instructions" class="form-control" placeholder="After meal">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.medicine-row').remove()">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(newRow);
+    medicineCount++;
+}
+
+// Common medicine suggestions
+const commonMedicines = [
+    'Tab. Paracetamol 500mg',
+    'Tab. Amoxicillin 500mg',
+    'Syp. Cetirizine 5mg/5ml',
+    'Tab. Omeprazole 20mg',
+    'Cap. Esomeprazole 40mg',
+    'Tab. Metformin 500mg',
+    'Tab. Amlodipine 5mg'
+];
+</script>
+{% endblock %}

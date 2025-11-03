@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctor Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .date-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 5px solid #007bff;
+    }
+    .date-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .date-card.today {
+        border-left-color: #28a745;
+        background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+    }
+    .date-card .date-header {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    .date-card .patient-count {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #007bff;
+    }
+    .date-card.today .patient-count {
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-calendar-week"></i> My Appointment Dates</h2>
+        <div>
+            <span class="badge bg-primary">Dr. {{ user.get_full_name }}</span>
+        </div>
+    </div>
+
+    <!-- Date Cards -->
+    <div class="row">
+        {% for date_info in appointment_dates %}
+        <div class="col-md-4 col-lg-3">
+            <div class="date-card {% if date_info.is_today %}today{% endif %}" 
+                 onclick="window.location.href='{% url 'appointments:doctor_appointments_by_date' %}?date={{ date_info.date|date:'Y-m-d' }}'">
+                <div class="date-header">
+                    <i class="bi bi-calendar-check"></i> 
+                    {{ date_info.date|date:"d M, Y" }}
+                </div>
+                <div class="text-muted mb-2">
+                    {{ date_info.date|date:"l" }}
+                    {% if date_info.is_today %}
+                    <span class="badge bg-success ms-2">TODAY</span>
+                    {% endif %}
+                </div>
+                <div class="patient-count">
+                    {{ date_info.count }} Patient{{ date_info.count|pluralize }}
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Click to view details</small>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-5">
+                <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
+                <h4 class="mt-3">No appointments scheduled</h4>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

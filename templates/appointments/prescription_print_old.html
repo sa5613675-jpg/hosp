@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রেসক্রিপশন - {{ prescription.patient.get_full_name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 1cm;
+        }
+        
+        @media print {
+            body { margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .page-header { 
+                position: running(header);
+            }
+            thead { display: table-header-group; }
+            tr { page-break-inside: avoid; }
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Nikosh', 'SolaimanLipi', 'Kalpurush', Arial, sans-serif;
+            font-size: 11pt;
+            color: #000;
+            background: #fff;
+        }
+        
+        .prescription-container {
+            max-width: 21cm;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+        
+        /* Header - Repeats on each page */
+        .page-header {
+            border: 2px solid #1565C0;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+        
+        .hospital-name {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #1565C0;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        .hospital-name-en {
+            font-size: 11pt;
+            color: #555;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        .hospital-details {
+            font-size: 9pt;
+            color: #666;
+            text-align: center;
+            line-height: 1.4;
+        }
+        
+        .doctor-info {
+            border-top: 1px solid #ddd;
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+        
+        .doctor-name {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #1565C0;
+        }
+        
+        .doctor-qual {
+            font-size: 9pt;
+            color: #555;
+            margin-top: 2px;
+        }
+        
+        /* Patient Info Bar */
+        .patient-bar {
+            display: table;
+            width: 100%;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+            font-size: 10pt;
+        }
+        
+        .patient-item {
+            display: table-cell;
+            padding: 8px 10px;
+            border-right: 1px solid #ddd;
+        }
+        
+        .patient-item:last-child {
+            border-right: none;
+        }
+        
+        .patient-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 8pt;
+            display: block;
+        }
+        
+        .patient-value {
+            color: #000;
+            margin-top: 2px;
+        }
+        
+        /* Diagnosis Box */
+        .diagnosis-section {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 10px 12px;
+            margin-bottom: 15px;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            color: #e65100;
+            font-size: 11pt;
+            margin-bottom: 5px;
+        }
+        
+        /* Rx Symbol */
+        .rx-symbol {
+            font-size: 28pt;
+            color: #d32f2f;
+            font-weight: bold;
+            margin: 10px 0 5px 0;
+            font-family: serif;
+        }
+        
+        /* Medicine Table */
+        .medicine-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .medicine-table thead th {
+            background: #1565C0;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 10pt;
+            font-weight: normal;
+            border: 1px solid #0d47a1;
+        }
+        
+        .medicine-table tbody td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 10pt;
+            vertical-align: top;
+        }
+        
+        .medicine-table tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .medicine-name {
+            font-weight: bold;
+            color: #1565C0;
+        }
+        
+        /* Advice Box */
+        .advice-box {
+            border: 1px solid #4caf50;
+            background: #f1f8e9;
+            padding: 10px 12px;
+            margin: 15px 0;
+        }
+        
+        .advice-title {
+            font-weight: bold;
+            color: #2e7d32;
+            font-size: 10pt;
+            margin-bottom: 5px;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        .signature-section {
+            text-align: right;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin: 0 0 5px auto;
+        }
+        
+        .print-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1565C0;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14pt;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .print-button:hover {
+            background: #0d47a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="prescription-container">
+        <!-- Header (Repeats on each page) -->
+        <div class="page-header">
+            <div class="hospital-name">ইউনিভার্সাল হেলথ সার্ভিসেস এন্ড ডায়াগনস্টিক সেন্টার</div>
+            <div class="hospital-name-en">UNIVERSAL HEALTH SERVICES & DIAGNOSTIC CENTER</div>
+            <div class="hospital-details">
+                সাদিয়া প্যালেস, বাজার রোড, নজিপুর সরদারপাড়া মোড়, পত্নীতলা, নওগাঁ<br>
+                ফোন: ০১৭৩২-৮৫৩৩০৩
+            </div>
+            <div class="doctor-info">
+                <div class="doctor-name">{{ prescription.doctor.get_full_name }}</div>
+                <div class="doctor-qual">{{ prescription.doctor.specialization|default:"MBBS" }}</div>
+            </div>
+        </div>
+        
+        <!-- Patient Information Bar -->
+        <div class="patient-bar">
+            <div class="patient-item" style="width: 30%;">
+                <span class="patient-label">Name / নাম</span>
+                <span class="patient-value">{{ prescription.patient.get_full_name }}</span>
+            </div>
+            <div class="patient-item" style="width: 15%;">
+                <span class="patient-label">Age / বয়স</span>
+                <span class="patient-value">{{ prescription.patient.date_of_birth|default:"N/A" }}</span>
+            </div>
+            <div class="patient-item" style="width: 15%;">
+                <span class="patient-label">Gender / লিঙ্গ</span>
+                <span class="patient-value">{{ prescription.patient.gender|default:"N/A" }}</span>
+            </div>
+            <div class="patient-item" style="width: 20%;">
+                <span class="patient-label">Date / তারিখ</span>
+                <span class="patient-value">{{ prescription.created_at|date:"d-m-Y" }}</span>
+            </div>
+            <div class="patient-item" style="width: 20%;">
+                <span class="patient-label">Patient ID</span>
+                <span class="patient-value">{{ prescription.patient.patient_id }}</span>
+            </div>
+        </div>
+        
+        <!-- Diagnosis -->
+        {% if prescription.diagnosis %}
+        <div class="diagnosis-section">
+            <div class="section-title">Diagnosis / রোগ নির্ণয়</div>
+            <div>{{ prescription.diagnosis }}</div>
+        </div>
+        {% endif %}
+        
+        <!-- Rx and Medicines -->
+        <div class="rx-symbol">℞</div>
+        
+        <table class="medicine-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">Sr.</th>
+                    <th style="width: 35%;">Medicine Name & Dosage</th>
+                    <th style="width: 20%;">Frequency</th>
+                    <th style="width: 15%;">Duration</th>
+                    <th style="width: 25%;">Instructions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medicine in prescription.medicines.all %}
+                <tr>
+                    <td>{{ forloop.counter }}.</td>
+                    <td>
+                        <span class="medicine-name">{{ medicine.medicine_name }}</span><br>
+                        <span style="font-size: 9pt; color: #666;">{{ medicine.dosage }}</span>
+                    </td>
+                    <td>{{ medicine.frequency }}</td>
+                    <td>{{ medicine.duration }}</td>
+                    <td>{{ medicine.instructions|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #999;">No medicines prescribed</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Advice -->
+        {% if prescription.advice %}
+        <div class="advice-box">
+            <div class="advice-title">📋 Advice / পরামর্শ</div>
+            <div>{{ prescription.advice }}</div>
+        </div>
+        {% endif %}
+        
+        <!-- Follow-up -->
+        {% if prescription.follow_up_date %}
+        <div style="margin: 15px 0; font-size: 10pt;">
+            <strong>⏰ Next Visit:</strong> {{ prescription.follow_up_date|date:"d F, Y" }}
+        </div>
+        {% endif %}
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div style="font-size: 9pt; color: #666;">
+                Printed: {{ prescription.created_at|date:"d M, Y - h:i A" }}
+            </div>
+            <div class="signature-section">
+                <div class="signature-line"></div>
+                <div style="font-weight: bold;">{{ prescription.doctor.get_full_name }}</div>
+                <div style="font-size: 9pt; color: #666;">{{ prescription.doctor.specialization|default:"Doctor" }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Print Button -->
+    <button class="print-button no-print" onclick="window.print()">
+        🖨️ Print Prescription
+    </button>
+</body>
+</html>
+            padding: 15px;
+            margin-bottom: 15px;
+            background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);
+        }
+        
+        .hospital-info {
+            text-align: center;
+            border-bottom: 2px solid #1565C0;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .hospital-name-main {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #1565C0;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+        
+        .hospital-name-sub {
+            font-size: 12pt;
+            color: #555;
+            margin: 3px 0;
+        }
+        
+        .hospital-address {
+            font-size: 9pt;
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .hospital-contact {
+            font-size: 9pt;
+            color: #666;
+            margin: 3px 0;
+        }
+        
+        /* Doctor Section */
+        .doctor-section {
+            background: #f0f7ff;
+            padding: 10px 15px;
+            border-left: 4px solid #1565C0;
+            margin-bottom: 15px;
+        }
+        
+        .doctor-name {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1565C0;
+            margin: 0 0 5px 0;
+        }
+        
+        .doctor-qualification {
+            font-size: 9pt;
+            color: #555;
+            line-height: 1.4;
+        }
+        
+        /* Patient Info Table */
+        .patient-info {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        
+        .patient-row {
+            display: table-row;
+        }
+        
+        .patient-label {
+            display: table-cell;
+            padding: 8px 12px;
+            font-weight: bold;
+            width: 120px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        
+        .patient-value {
+            display: table-cell;
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            color: #000;
+        }
+        
+        .patient-row:last-child .patient-label,
+        .patient-row:last-child .patient-value {
+            border-bottom: none;
+        }
+        
+        /* Section Headers */
+        .section-header {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1565C0;
+            border-bottom: 2px solid #1565C0;
+            padding: 5px 0;
+            margin: 15px 0 10px 0;
+        }
+        
+        .section-content {
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            min-height: 40px;
+        }
+        
+        /* RX Symbol */
+        .rx-symbol {
+            font-size: 36pt;
+            font-weight: bold;
+            color: #dc3545;
+            font-family: 'Times New Roman', serif;
+            margin: 10px 0;
+        }
+        
+        /* Medicines Table */
+        .medicine-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        
+        .medicine-table th {
+            background: #1565C0;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 10pt;
+            border: 1px solid #0d47a1;
+        }
+        
+        .medicine-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            vertical-align: top;
+            font-size: 10pt;
+        }
+        
+        .medicine-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .medicine-name {
+            font-weight: bold;
+            color: #000;
+        }
+        
+        /* Signature Section */
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        .advice-box {
+            flex: 1;
+            padding: 10px;
+            background: #fffbea;
+            border: 1px dashed #ffc107;
+            border-radius: 5px;
+            margin-right: 20px;
+            font-size: 9pt;
+        }
+        
+        .doctor-signature {
+            flex: 0 0 250px;
+            text-align: center;
+        }
+        
+        .signature-line {
+            border-top: 2px solid #000;
+            margin-top: 50px;
+            padding-top: 8px;
+        }
+        
+        .doctor-sign-name {
+            font-weight: bold;
+            font-size: 11pt;
+            color: #1565C0;
+        }
+        
+        .doctor-sign-degree {
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        /* Footer */
+        .prescription-footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+        }
+            color: #15803d;
+            margin-bottom: 8px;
+            font-size: 11pt;
+        }
+        
+        .advice-text {
+            white-space: pre-line;
+            color: #333;
+        }
+        
+        /* Investigation */
+        .investigation-box {
+            background: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 12px 15px;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        .signature-section {
+            text-align: center;
+        }
+        
+        .signature-line {
+            width: 200px;
+            border-top: 2px solid #333;
+            margin: 60px 0 8px 0;
+        }
+        
+        .doctor-signature {
+            font-weight: bold;
+            font-size: 11pt;
+        }
+        
+        .follow-up {
+            background: #fef3c7;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .follow-up-label {
+            font-weight: bold;
+            color: #92400e;
+        }
+        
+        /* Print Button */
+        .print-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 14pt;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .print-button:hover {
+            background: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="prescription-container">
+        <!-- Professional BD Header -->
+        <div class="prescription-header">
+            <div class="hospital-info">
+                <div class="hospital-name-main">ইউনিভার্সাল হেলথ সার্ভিসেস এন্ড ডায়াগনস্টিক সেন্টার</div>
+                <div class="hospital-name-sub">Universal Health Services & Diagnostic Center</div>
+                <div class="hospital-address">📍 সাদিয়া প্যালেস, বাজার রোড, নজিপুর সরদারপাড়া মোড়, নজিপুর পৌরসদ, পত্নীতলা, নওগাঁ</div>
+                <div class="hospital-contact">☎ মোবাইল: ০১৭৩২-৮৫৩৩০৩</div>
+            </div>
+            
+            <!-- Doctor Information -->
+            <div class="doctor-section">
+                <div class="doctor-name">{{ prescription.doctor.first_name }} {{ prescription.doctor.last_name }}</div>
+                <div class="doctor-qualification">{{ prescription.doctor.specialization|default:"মেডিসিন বিশেষজ্ঞ" }}</div>
+            </div>
+        </div>
+            </div>
+        </div>
+        
+        <!-- Patient Information -->
+        <div class="patient-info">
+            <div class="patient-row">
+                <div class="patient-label">Name:</div>
+                <div class="patient-value">{{ prescription.patient.get_full_name }}</div>
+                <div class="patient-label">Date:</div>
+                <div class="patient-value">{{ prescription.created_at|date:"d-m-Y" }}</div>
+            </div>
+            <div class="patient-row">
+                <div class="patient-label">ID:</div>
+                <div class="patient-value">{{ prescription.patient.patient_id }}</div>
+                <div class="patient-label">Rx No:</div>
+                <div class="patient-value">{{ prescription.prescription_number }}</div>
+            </div>
+            <div class="patient-row">
+                <div class="patient-label">Age:</div>
+                <div class="patient-value">{{ prescription.patient.age }} years</div>
+                <div class="patient-label">Gender:</div>
+                <div class="patient-value">{{ prescription.patient.get_gender_display }}</div>
+            </div>
+        </div>
+        
+        <!-- Chief Complaint -->
+        {% if prescription.chief_complaint %}
+        <div class="section-header">Chief Complaint</div>
+        <div class="section-content">{{ prescription.chief_complaint }}</div>
+        {% endif %}
+        
+        <!-- History -->
+        {% if prescription.history %}
+        <div class="section-header">History</div>
+        <div class="section-content">{{ prescription.history }}</div>
+        {% endif %}
+        
+        <!-- Diagnosis -->
+        {% if prescription.on_examination %}
+        <div class="section-header">Diagnosis</div>
+        <div class="section-content">{{ prescription.on_examination }}</div>
+        {% endif %}
+        
+        <!-- Investigation -->
+        {% if prescription.advice %}
+        <div class="section-header">Investigation</div>
+        <div class="section-content">{{ prescription.advice|linebreaks }}</div>
+        {% endif %}
+        
+        <!-- RX Symbol and Medicines -->
+        <div class="rx-symbol">℞</div>
+        <div class="clinical-section">
+            <div class="section-header">On Examinations</div>
+            <div class="vitals-row">
+                {% if prescription.blood_pressure %}
+                <div class="vital-box">
+                    <div class="vital-label">Blood Pressure</div>
+                    <div class="vital-value">{{ prescription.blood_pressure }}</div>
+                </div>
+                {% endif %}
+                {% if prescription.pulse %}
+                <div class="vital-box">
+                    <div class="vital-label">Pulse</div>
+                    <div class="vital-value">{{ prescription.pulse }}</div>
+                </div>
+                {% endif %}
+                {% if prescription.temperature %}
+                <div class="vital-box">
+                    <div class="vital-label">Temperature</div>
+                    <div class="vital-value">{{ prescription.temperature }}</div>
+                </div>
+                {% endif %}
+                {% if prescription.weight %}
+                <div class="vital-box">
+                    <div class="vital-label">Weight</div>
+                    <div class="vital-value">{{ prescription.weight }}</div>
+                </div>
+                {% endif %}
+            </div>
+            {% if prescription.on_examination %}
+            <div class="section-body" style="margin-top: 10px;">
+                {{ prescription.on_examination }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Diagnosis -->
+        <div class="clinical-section">
+            <div class="section-header">Diagnosis</div>
+            <div class="diagnosis-box">
+                {{ prescription.diagnosis }}
+            </div>
+        </div>
+        
+        <!-- Investigation -->
+        {% if prescription.investigation %}
+        <div class="clinical-section">
+            <div class="section-header">Investigation</div>
+            <div class="investigation-box">
+                {{ prescription.investigation }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Prescription (Medicines) -->
+        <div class="clinical-section">
+            <div class="rx-symbol">℞</div>
+            <table class="medicine-table">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">Sr.</th>
+                        <th style="width: 35%;">Medicine Name & Dosage</th>
+                        <th style="width: 25%;">Frequency</th>
+                        <th style="width: 15%;">Duration</th>
+                        <th style="width: 20%;">Instructions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for medicine in prescription.medicines.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}.</td>
+                        <td>
+                            <span class="medicine-name">{{ medicine.medicine_name }}</span><br>
+                            {{ medicine.dosage }}
+                        </td>
+                        <td>{{ medicine.frequency }}</td>
+                        <td>{{ medicine.duration }}</td>
+                        <td>{{ medicine.instructions|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">No medicines prescribed</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Advice -->
+        {% if prescription.advice %}
+        <div class="advice-box">
+            <div class="advice-header">📋 Advices / পরামর্শ:</div>
+            <div class="advice-text">{{ prescription.advice }}</div>
+        </div>
+        {% endif %}
+        
+        <!-- Follow-up -->
+        {% if prescription.follow_up_date %}
+        <div class="follow-up">
+            <span class="follow-up-label">⏰ Next Visit:</span> 
+            {{ prescription.follow_up_date|date:"d F, Y" }}
+        </div>
+        {% endif %}
+        
+        <!-- Footer / Signature -->
+        <div class="footer">
+            <div style="font-size: 9pt; color: #666;">
+                Printed: {{ prescription.created_at|date:"d M, Y - h:i A" }}
+            </div>
+            <div class="signature-section">
+                <div class="signature-line"></div>
+                <div class="doctor-signature">{{ prescription.doctor.get_full_name }}</div>
+                <div style="font-size: 9pt; color: #666;">
+                    {{ prescription.doctor.specialization|default:"Doctor" }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Print Button (Hidden on print) -->
+    <button class="print-button no-print" onclick="window.print()">
+        🖨️ Print Prescription
+    </button>
+</body>
+</html>

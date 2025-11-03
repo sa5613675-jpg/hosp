@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>প্রেসক্রিপশন - {{ prescription.appointment.patient.get_full_name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0.75cm;
+        }
+        
+        body {
+            font-family: 'Nikosh', 'SolaimanLipi', Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Professional BD Style Header */
+        .prescription-header {
+            border: 3px solid #1565C0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);
+        }
+        
+        .hospital-info {
+            text-align: center;
+            border-bottom: 2px solid #1565C0;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .hospital-name-main {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #1565C0;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+        
+        .hospital-name-sub {
+            font-size: 12pt;
+            color: #555;
+            margin: 3px 0;
+        }
+        
+        .hospital-address {
+            font-size: 9pt;
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .hospital-contact {
+            font-size: 9pt;
+            color: #666;
+            margin: 3px 0;
+        }
+        
+        /* Doctor Info - Professional BD Style */
+        .doctor-section {
+            background: #f0f7ff;
+            padding: 10px 15px;
+            border-left: 4px solid #1565C0;
+            margin-bottom: 15px;
+        }
+        
+        .doctor-name {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1565C0;
+            margin: 0 0 5px 0;
+        }
+        
+        .doctor-qualification {
+            font-size: 9pt;
+            color: #555;
+            line-height: 1.4;
+        }
+        
+        /* Patient Info - Clean BD Style */
+        .patient-info {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        
+        .patient-row {
+            display: table-row;
+        }
+        
+        .patient-label {
+            display: table-cell;
+            padding: 8px 12px;
+            font-weight: bold;
+            width: 120px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        
+        .patient-value {
+            display: table-cell;
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            color: #000;
+        }
+        
+        .patient-row:last-child .patient-label,
+        .patient-row:last-child .patient-value {
+            border-bottom: none;
+        }
+        
+        /* Section Headers */
+        .section-header {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1565C0;
+            border-bottom: 2px solid #1565C0;
+            padding: 5px 0;
+            margin: 15px 0 10px 0;
+        }
+        
+        .section-content {
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            min-height: 40px;
+        }
+        
+        /* RX Symbol - Professional */
+        .rx-symbol {
+            font-size: 36pt;
+            font-weight: bold;
+            color: #dc3545;
+            font-family: 'Times New Roman', serif;
+            margin: 10px 0;
+        }
+        
+        /* Medicine Table - BD Style */
+        .medicine-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        
+        .medicine-table th {
+            background: #1565C0;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 10pt;
+            border: 1px solid #0d47a1;
+        }
+        
+        .medicine-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            vertical-align: top;
+            font-size: 10pt;
+        }
+        
+        .medicine-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .medicine-name {
+            font-weight: bold;
+            color: #000;
+        }
+        
+        /* Signature Section - BD Professional Style */
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        .advice-box {
+            flex: 1;
+            padding: 10px;
+            background: #fffbea;
+            border: 1px dashed #ffc107;
+            border-radius: 5px;
+            margin-right: 20px;
+            font-size: 9pt;
+        }
+        
+        .doctor-signature {
+            flex: 0 0 250px;
+            text-align: center;
+        }
+        
+        .signature-line {
+            border-top: 2px solid #000;
+            margin-top: 50px;
+            padding-top: 8px;
+        }
+        
+        .doctor-sign-name {
+            font-weight: bold;
+            font-size: 11pt;
+            color: #1565C0;
+        }
+        
+        .doctor-sign-degree {
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        /* Footer */
+        .prescription-footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 3px;
+            font-size: 10pt;
+        }
+        
+        .alert-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding: 15px;">
+        <!-- Professional BD Header -->
+        <div class="prescription-header">
+            <div class="hospital-info">
+                <div class="hospital-name-main">ইউনিভার্সাল হেলথ সার্ভিসেস এন্ড ডায়াগনস্টিক সেন্টার</div>
+                <div class="hospital-name-sub">Universal Health Services & Diagnostic Center</div>
+                <div class="hospital-address">📍 সাদিয়া প্যালেস, বাজার রোড, নজিপুর সরদারপাড়া মোড়, নজিপুর পৌরসদ, পত্নীতলা, নওগাঁ</div>
+                <div class="hospital-contact">☎ মোবাইল: ০১৭৩২-৮৫৩৩০৩</div>
+            </div>
+            
+            <!-- Doctor Information -->
+            <div class="doctor-section">
+                <div class="doctor-name">{{ prescription.doctor.first_name }} {{ prescription.doctor.last_name }}</div>
+                <div class="doctor-qualification">{{ prescription.doctor.specialization }}</div>
+            </div>
+        </div>
+        
+        <!-- Patient Information -->
+        <div class="patient-info">
+            <div class="patient-row">
+                <div class="patient-label">Name:</div>
+                <div class="patient-value">{{ prescription.appointment.patient.get_full_name }}</div>
+                <div class="patient-label">Date:</div>
+                <div class="patient-value">{{ prescription.created_at|date:"d-m-Y" }}</div>
+            </div>
+            <div class="patient-row">
+                <div class="patient-label">ID:</div>
+                <div class="patient-value">{{ prescription.appointment.patient.patient_id }}</div>
+                <div class="patient-label">Rx No:</div>
+                <div class="patient-value">{{ prescription.prescription_number }}</div>
+            </div>
+            <div class="patient-row">
+                <div class="patient-label">Age:</div>
+                <div class="patient-value">{{ prescription.appointment.patient.age }} years</div>
+                <div class="patient-label">Gender:</div>
+                <div class="patient-value">{{ prescription.appointment.patient.get_gender_display }}</div>
+            </div>
+        </div>
+        
+        <!-- Chief Complaint -->
+        {% if prescription.chief_complaint %}
+        <div class="section-header">Chief Complaint</div>
+        <div class="section-content">{{ prescription.chief_complaint }}</div>
+        {% endif %}
+        
+        <!-- History -->
+        {% if prescription.history %}
+        <div class="section-header">History</div>
+        <div class="section-content">{{ prescription.history }}</div>
+        {% endif %}
+        
+        <!-- Diagnosis -->
+        {% if prescription.on_examination %}
+        <div class="section-header">Diagnosis</div>
+        <div class="section-content">{{ prescription.on_examination }}</div>
+        {% endif %}
+        
+        <!-- Investigation -->
+        {% if prescription.advice %}
+        <div class="section-header">Investigation</div>
+        <div class="section-content">{{ prescription.advice|linebreaks }}</div>
+        {% endif %}
+        
+        <!-- RX Symbol and Medicines -->
+        <div class="rx-symbol">℞</div>
+        
+        {% if prescription.medicines.exists %}
+        <table class="medicine-table">
+            <thead>
+                <tr>
+                    <th width="5%">Sr.</th>
+                    <th width="35%">Medicine Name & Dosage</th>
+                    <th width="20%">Frequency</th>
+                    <th width="15%">Duration</th>
+                    <th width="25%">Instructions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medicine in prescription.medicines.all %}
+                <tr>
+                    <td style="text-align: center;">{{ forloop.counter }}</td>
+                    <td>
+                        <div class="medicine-name">{{ medicine.medicine_name }}</div>
+                        <div style="font-size: 9pt; color: #666;">{{ medicine.dosage }}</div>
+                    </td>
+                    <td>{{ medicine.frequency }}</td>
+                    <td>{{ medicine.duration }}</td>
+                    <td style="font-size: 9pt;">{{ medicine.instructions|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align: center; padding: 20px; color: #999;">
+            No medicines prescribed
+        </div>
+        {% endif %}
+        
+        <!-- Signature Section -->
+        <div class="signature-section">
+            <div class="advice-box">
+                <strong>📋 Advices / পরামর্শ:</strong><br>
+                {{ prescription.advice|default:"Follow the prescription as directed"|linebreaks }}
+            </div>
+            <div class="doctor-signature">
+                <div class="signature-line">
+                    <div class="doctor-sign-name">{{ prescription.doctor.first_name }} {{ prescription.doctor.last_name }}</div>
+                    <div class="doctor-sign-degree">{{ prescription.doctor.specialization }}</div>
+                    <div class="doctor-sign-degree">মেডিসিন বিশেষজ্ঞ</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="prescription-footer">
+            This is a computer-generated prescription. For queries, contact: ০১৭৩২-৮৫৩৩০৩<br>
+            এটি একটি কম্পিউটার জেনারেটেড প্রেসক্রিপশন। প্রশ্নের জন্য যোগাযোগ করুন: ০১৭৩২-৮৫৩৩০৩
+        </div>
+    </div>
+    
+    <!-- Print Button -->
+                {{ prescription.appointment.doctor.phone }}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p>This is a computer-generated prescription | Printed on {{ prescription.created_at|date:"M d, Y h:i A" }}</p>
+        <p>For any queries, please contact us at +1234567890</p>
+    </div>
+    
+    <!-- Print Button (hidden when printing) -->
+    <div class="no-print" style="position: fixed; top: 20px; right: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14pt;">
+            🖨️ Print
+        </button>
+        <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14pt; margin-left: 10px;">
+            ✖️ Close
+        </button>
+    </div>
+    
+    <script>
+        // Auto-print on page load (optional)
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

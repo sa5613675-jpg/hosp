@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Stock - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-section h5 {
+        color: #17a2b8;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #17a2b8;
+    }
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+    .medicine-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #17a2b8;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="bi bi-box-seam text-info"></i> Add Stock Adjustment</h2>
+                    <p class="text-muted">Purchase medicine or adjust stock levels</p>
+                </div>
+                <div>
+                    <a href="{% url 'accounts:pharmacy_management' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" onsubmit="return validateForm()">
+        {% csrf_token %}
+        
+        <!-- Medicine Selection -->
+        <div class="form-section">
+            <h5><i class="bi bi-capsule-pill"></i> Select Medicine</h5>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label required-field">Medicine</label>
+                    <select class="form-select form-select-lg" name="drug" id="drug-select" required onchange="showMedicineInfo()">
+                        <option value="">-- Select Medicine --</option>
+                        {% for drug in drugs %}
+                        <option value="{{ drug.id }}" 
+                                data-brand="{{ drug.brand_name }}"
+                                data-generic="{{ drug.generic_name }}"
+                                data-form="{{ drug.get_form_display }}"
+                                data-strength="{{ drug.strength }}"
+                                data-stock="{{ drug.quantity_in_stock }}"
+                                data-buy-price="{{ drug.buy_price }}"
+                                data-sell-price="{{ drug.selling_price }}">
+                            {{ drug.brand_name }} ({{ drug.generic_name }}) - {{ drug.form }} {{ drug.strength }} - Stock: {{ drug.quantity_in_stock }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Medicine Info Display -->
+            <div class="medicine-info" id="medicine-info">
+                <div class="row">
+                    <div class="col-md-3">
+                        <small class="text-muted">Brand Name</small>
+                        <div><strong id="info-brand">-</strong></div>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">Generic Name</small>
+                        <div><strong id="info-generic">-</strong></div>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">Current Stock</small>
+                        <div><strong id="info-stock" class="text-info">-</strong></div>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">Buy Price</small>
+                        <div><strong id="info-buy-price">-</strong></div>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">Sell Price</small>
+                        <div><strong id="info-sell-price">-</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adjustment Details -->
+        <div class="form-section">
+            <h5><i class="bi bi-gear"></i> Adjustment Details</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required-field">Adjustment Type</label>
+                    <select class="form-select" name="adjustment_type" id="adjustment-type" required onchange="updateTypeHint()">
+                        <option value="">-- Select Type --</option>
+                        {% for code, label in adjustment_types %}
+                        <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted" id="type-hint">Select adjustment type</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required-field">Quantity</label>
+                    <input type="number" class="form-control" name="quantity" id="quantity" required 
+                           placeholder="Enter quantity" onchange="calculateCost()">
+                    <small class="text-muted">Positive for additions, negative for removals</small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required-field">Unit Cost (৳)</label>
+                    <input type="number" step="0.01" class="form-control" name="unit_cost" id="unit-cost" required 
+                           placeholder="0.00" onchange="calculateCost()">
+                    <small class="text-muted">Purchase cost per unit (for expense tracking)</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Total Cost</label>
+                    <div class="input-group">
+                        <span class="input-group-text">৳</span>
+                        <input type="text" class="form-control" id="total-cost" readonly value="0.00">
+                    </div>
+                    <small class="text-success" id="expense-note" style="display:none;">
+                        <i class="bi bi-check-circle"></i> This will auto-create an expense
+                    </small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label required-field">Reason</label>
+                    <textarea class="form-control" name="reason" rows="2" required 
+                              placeholder="e.g., Initial purchase, Restocking from supplier, Damaged goods removal"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Purchase Info (for PURCHASE type) -->
+        <div class="form-section" id="purchase-info" style="display:none;">
+            <h5><i class="bi bi-receipt"></i> Purchase Information (Optional)</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Supplier Name</label>
+                    <input type="text" class="form-control" name="supplier" 
+                           placeholder="e.g., PharmaCorp Ltd">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Invoice Number</label>
+                    <input type="text" class="form-control" name="invoice_number" 
+                           placeholder="e.g., INV-2025-001">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Batch Number</label>
+                    <input type="text" class="form-control" name="batch_number" 
+                           placeholder="e.g., BATCH-2025-001">
+                </div>
+            </div>
+        </div>
+
+        <!-- New Stock Preview -->
+        <div class="alert alert-info" id="stock-preview" style="display:none;">
+            <strong><i class="bi bi-info-circle"></i> Stock Preview:</strong>
+            <span id="preview-text"></span>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="row mb-4">
+            <div class="col-12 text-end">
+                <a href="{% url 'accounts:pharmacy_management' %}" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-info btn-lg">
+                    <i class="bi bi-check-circle"></i> Add Stock Adjustment
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function showMedicineInfo() {
+    const select = document.getElementById('drug-select');
+    const option = select.options[select.selectedIndex];
+    
+    if (option.value) {
+        document.getElementById('info-brand').textContent = option.dataset.brand;
+        document.getElementById('info-generic').textContent = option.dataset.generic;
+        document.getElementById('info-stock').textContent = option.dataset.stock + ' units';
+        document.getElementById('info-buy-price').textContent = '৳' + option.dataset.buyPrice;
+        document.getElementById('info-sell-price').textContent = '৳' + option.dataset.sellPrice;
+        document.getElementById('medicine-info').style.display = 'block';
+        
+        // Auto-fill unit cost with buy price
+        document.getElementById('unit-cost').value = option.dataset.buyPrice;
+        calculateCost();
+    } else {
+        document.getElementById('medicine-info').style.display = 'none';
+    }
+}
+
+function updateTypeHint() {
+    const type = document.getElementById('adjustment-type').value;
+    const hint = document.getElementById('type-hint');
+    const purchaseInfo = document.getElementById('purchase-info');
+    
+    if (type === 'PURCHASE') {
+        hint.textContent = 'Adding new stock from supplier';
+        purchaseInfo.style.display = 'block';
+    } else if (type === 'RETURN') {
+        hint.textContent = 'Returning stock to supplier (reduces inventory)';
+        purchaseInfo.style.display = 'none';
+    } else if (type === 'EXPIRED') {
+        hint.textContent = 'Removing expired medicine (reduces inventory)';
+        purchaseInfo.style.display = 'none';
+    } else if (type === 'DAMAGED') {
+        hint.textContent = 'Removing damaged stock (reduces inventory)';
+        purchaseInfo.style.display = 'none';
+    } else if (type === 'CORRECTION') {
+        hint.textContent = 'Manual stock correction';
+        purchaseInfo.style.display = 'none';
+    } else {
+        hint.textContent = 'Select adjustment type';
+        purchaseInfo.style.display = 'none';
+    }
+    
+    calculateCost();
+}
+
+function calculateCost() {
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const unitCost = parseFloat(document.getElementById('unit-cost').value) || 0;
+    const type = document.getElementById('adjustment-type').value;
+    
+    const totalCost = Math.abs(quantity * unitCost);
+    document.getElementById('total-cost').value = totalCost.toFixed(2);
+    
+    // Show expense note for PURCHASE type
+    if (type === 'PURCHASE' && quantity > 0 && unitCost > 0) {
+        document.getElementById('expense-note').style.display = 'block';
+    } else {
+        document.getElementById('expense-note').style.display = 'none';
+    }
+    
+    // Update stock preview
+    updateStockPreview();
+}
+
+function updateStockPreview() {
+    const select = document.getElementById('drug-select');
+    const option = select.options[select.selectedIndex];
+    const quantity = parseInt(document.getElementById('quantity').value) || 0;
+    
+    if (option.value && quantity) {
+        const currentStock = parseInt(option.dataset.stock);
+        const newStock = currentStock + quantity;
+        
+        document.getElementById('preview-text').innerHTML = 
+            `Current: <strong>${currentStock}</strong> units → 
+             New: <strong class="${newStock < 0 ? 'text-danger' : 'text-success'}">${newStock}</strong> units 
+             (${quantity > 0 ? '+' : ''}${quantity})`;
+        document.getElementById('stock-preview').style.display = 'block';
+    }
+}
+
+function validateForm() {
+    const quantity = parseInt(document.getElementById('quantity').value) || 0;
+    const select = document.getElementById('drug-select');
+    const option = select.options[select.selectedIndex];
+    const currentStock = parseInt(option.dataset.stock);
+    const newStock = currentStock + quantity;
+    
+    if (newStock < 0) {
+        alert('Error: This adjustment would result in negative stock!\nCurrent: ' + currentStock + ', Adjustment: ' + quantity + ', Result: ' + newStock);
+        return false;
+    }
+    
+    return true;
+}
+</script>
+{% endblock %}

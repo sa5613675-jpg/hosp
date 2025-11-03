@@ -1,0 +1,130 @@
+════════════════════════════════════════════════════════════════════════════════
+                   HOW TO PULL CODE ON YOUR VPS
+════════════════════════════════════════════════════════════════════════════════
+
+✓ All production code is now on the MAIN BRANCH on GitHub
+
+════════════════════════════════════════════════════════════════════════════════
+METHOD 1: AUTOMATIC (RECOMMENDED)
+════════════════════════════════════════════════════════════════════════════════
+
+On your VPS, run this single command:
+
+```bash
+cd /var/www/diagcenter && curl -sSL https://raw.githubusercontent.com/mahindx0-crypto/hosp/main/pull_and_deploy_vps.sh | bash
+```
+
+This will:
+✓ Pull latest code from main branch
+✓ Clean Python cache
+✓ Install dependencies
+✓ Run migrations
+✓ Collect static files
+✓ Restart services
+
+════════════════════════════════════════════════════════════════════════════════
+METHOD 2: MANUAL STEPS
+════════════════════════════════════════════════════════════════════════════════
+
+1. SSH into your VPS:
+```bash
+ssh user@your_vps_ip
+```
+
+2. Navigate to your project directory:
+```bash
+cd /var/www/diagcenter
+# or wherever your project is installed
+```
+
+3. Pull latest code:
+```bash
+git fetch origin main
+git reset --hard origin/main
+```
+
+4. Clean cache:
+```bash
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
+find . -name "*.pyc" -delete 2>/dev/null
+```
+
+5. Activate virtual environment:
+```bash
+source venv/bin/activate
+```
+
+6. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+7. Run migrations:
+```bash
+python manage.py migrate
+```
+
+8. Collect static files:
+```bash
+python manage.py collectstatic --noinput
+```
+
+9. Restart services:
+```bash
+sudo supervisorctl restart diagcenter
+sudo systemctl reload nginx
+```
+
+════════════════════════════════════════════════════════════════════════════════
+WHAT'S NEW IN THIS VERSION:
+════════════════════════════════════════════════════════════════════════════════
+
+✓ 90 real lab tests added (from Universal Health Services)
+✓ Simplified medicine form (only 4 fields)
+✓ All fake data removed
+✓ Doctor accounts fixed (phone-based login)
+✓ Medicine stock reset to 0
+✓ Financial records cleared
+✓ All user accounts preserved
+✓ Lab assistant dashboard complete
+✓ PC commission system working
+✓ Pharmacy management simplified
+
+════════════════════════════════════════════════════════════════════════════════
+AFTER PULLING:
+════════════════════════════════════════════════════════════════════════════════
+
+1. Run the data cleanup script (OPTIONAL - only if you want to clear test data):
+```bash
+python prepare_production.py
+```
+
+2. Test the system:
+   - Login with doctor accounts
+   - Create a test appointment
+   - Add a lab bill
+   - Test pharmacy (add medicine)
+
+3. Check logs if any issues:
+```bash
+tail -f /var/log/diagcenter/gunicorn_error.log
+tail -f /var/log/nginx/error.log
+```
+
+════════════════════════════════════════════════════════════════════════════════
+DOCTOR LOGIN CREDENTIALS:
+════════════════════════════════════════════════════════════════════════════════
+
+1. Username: 01312025152 | Password: 025152
+2. Username: 01712765762 | Password: 765762
+3. Username: 01761338884 | Password: 338884
+4. Username: 01770928782 | Password: 928782
+
+════════════════════════════════════════════════════════════════════════════════
+
+For more details, see:
+- PRODUCTION_SUMMARY.txt
+- DOCTOR_ACCOUNTS.txt
+- deploy_production_vps.sh (for fresh installation)
+
+════════════════════════════════════════════════════════════════════════════════

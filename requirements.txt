@@ -1,0 +1,18 @@
+Django==5.2.7
+djangorestframework==3.16.1
+django-cors-headers==4.9.0
+channels==4.3.1
+channels-redis==4.3.0
+daphne==4.2.1
+crispy-bootstrap5==2025.6
+django-crispy-forms==2.4
+Pillow==11.3.0
+pyttsx3==2.99
+gTTS==2.5.4
+redis==7.0.0
+gunicorn==23.0.0
+uvicorn[standard]==0.34.0
+whitenoise==6.8.2
+
+# Optional for production
+# psycopg2-binary==2.9.9  # For PostgreSQL

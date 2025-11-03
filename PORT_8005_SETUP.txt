@@ -1,0 +1,162 @@
+════════════════════════════════════════════════════════════════
+    HOSPITAL SYSTEM - PORT 8005 SETUP
+════════════════════════════════════════════════════════════════
+
+Your VPS has multiple servers running. This hospital system will
+run on PORT 8005 to avoid conflicts.
+
+════════════════════════════════════════════════════════════════
+STEP 1: PULL LATEST CODE
+════════════════════════════════════════════════════════════════
+
+cd /var/www/hosp
+git fetch mahindx0 main
+git reset --hard mahindx0/main
+
+════════════════════════════════════════════════════════════════
+STEP 2: START ON PORT 8005
+════════════════════════════════════════════════════════════════
+
+bash start_on_port_8005.sh
+
+This will:
+✓ Check if port 8005 is available
+✓ Stop any existing hospital processes
+✓ Start Gunicorn on 0.0.0.0:8005
+✓ Run as daemon in background
+
+════════════════════════════════════════════════════════════════
+STEP 3: ACCESS YOUR SYSTEM
+════════════════════════════════════════════════════════════════
+
+Direct Access:
+http://YOUR_VPS_IP:8005
+
+Example: http://123.45.67.89:8005
+
+════════════════════════════════════════════════════════════════
+FIREWALL (IMPORTANT!)
+════════════════════════════════════════════════════════════════
+
+You MUST allow port 8005 in your firewall:
+
+# If using UFW
+sudo ufw allow 8005/tcp
+sudo ufw reload
+
+# If using iptables
+sudo iptables -A INPUT -p tcp --dport 8005 -j ACCEPT
+sudo iptables-save
+
+# Or in Contabo control panel:
+# Add firewall rule to allow port 8005
+
+════════════════════════════════════════════════════════════════
+USEFUL COMMANDS
+════════════════════════════════════════════════════════════════
+
+START SERVER:
+bash /var/www/hosp/start_on_port_8005.sh
+
+STOP SERVER:
+bash /var/www/hosp/stop_server.sh
+
+CHECK STATUS:
+ps aux | grep -i hosp
+netstat -tlnp | grep 8005
+
+VIEW LOGS:
+tail -f /var/log/hosp_error.log
+
+TEST LOCALLY:
+curl http://localhost:8005
+
+RESTART:
+bash /var/www/hosp/stop_server.sh
+bash /var/www/hosp/start_on_port_8005.sh
+
+════════════════════════════════════════════════════════════════
+NGINX REVERSE PROXY (OPTIONAL)
+════════════════════════════════════════════════════════════════
+
+If you want to access via domain instead of IP:port, add this
+to your Nginx config:
+
+server {
+    listen 80;
+    server_name hospital.yourdomain.com;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8005;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    location /static/ {
+        alias /var/www/hosp/staticfiles/;
+    }
+    
+    location /media/ {
+        alias /var/www/hosp/media/;
+    }
+}
+
+Then:
+sudo nginx -t
+sudo systemctl reload nginx
+
+════════════════════════════════════════════════════════════════
+AUTO-START ON BOOT (OPTIONAL)
+════════════════════════════════════════════════════════════════
+
+Create systemd service:
+
+sudo nano /etc/systemd/system/hospital.service
+
+[Unit]
+Description=Hospital Management System
+After=network.target
+
+[Service]
+Type=forking
+User=root
+WorkingDirectory=/var/www/hosp
+ExecStart=/var/www/hosp/start_on_port_8005.sh
+ExecStop=/var/www/hosp/stop_server.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+Then:
+sudo systemctl daemon-reload
+sudo systemctl enable hospital
+sudo systemctl start hospital
+
+════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+════════════════════════════════════════════════════════════════
+
+Port already in use?
+sudo lsof -i :8005
+sudo kill -9 $(lsof -t -i:8005)
+
+Can't connect from outside?
+- Check firewall: sudo ufw status
+- Check if binding to 0.0.0.0 (not 127.0.0.1)
+- Check VPS provider firewall/security groups
+
+Server not starting?
+tail -f /var/log/hosp_error.log
+
+════════════════════════════════════════════════════════════════
+
+Your other servers can continue running on their ports:
+- Server 1: Port XXXX
+- Server 2: Port XXXX  
+- Server 3: Port XXXX
+- Hospital: Port 8005 ✓
+
+════════════════════════════════════════════════════════════════

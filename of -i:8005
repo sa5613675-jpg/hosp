@@ -1,0 +1,16 @@
+[0;1;32m●[0m nazipuruhs.service - Nazipuruhs Hospital Management System
+     Loaded: loaded (]8;;file://vmi2823196/etc/systemd/system/nazipuruhs.service/etc/systemd/system/nazipuruhs.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Thu 2025-10-30 11:07:52 CET; 133ms ago
+   Main PID: 812064 (gunicorn)
+      Tasks: 2 (limit: 9483)
+     Memory: 14.3M (peak: 14.3M)
+        CPU: 149ms
+     CGroup: /system.slice/nazipuruhs.service
+             ├─[0;38;5;245m812064 /var/www/hosp/venv/bin/python3 /var/www/hosp/venv/bin/gunicorn --bind 0.0.0.0:8005 --workers 4 --timeout 120 --access-logfile /var/log/nazipuruhs/access.log --error-logfile /var/log/nazipuruhs/error.log diagcenter.wsgi:application[0m
+             └─[0;38;5;245m812067 /var/www/hosp/venv/bin/python3 /var/www/hosp/venv/bin/gunicorn --bind 0.0.0.0:8005 --workers 4 --timeout 120 --access-logfile /var/log/nazipuruhs/access.log --error-logfile /var/log/nazipuruhs/error.log diagcenter.wsgi:application[0m
+
+Oct 30 11:07:47 vmi2823196 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnazipuruhs.service: Failed with result 'exit-code'.[0m
+Oct 30 11:07:47 vmi2823196 systemd[1]: nazipuruhs.service: Consumed 1.271s CPU time.
+Oct 30 11:07:52 vmi2823196 systemd[1]: nazipuruhs.service: Scheduled restart job, restart counter is at 9.
+Oct 30 11:07:52 vmi2823196 systemd[1]: Starting nazipuruhs.service - Nazipuruhs Hospital Management System...
+Oct 30 11:07:52 vmi2823196 systemd[1]: Started nazipuruhs.service - Nazipuruhs Hospital Management System.

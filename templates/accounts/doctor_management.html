@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Doctor Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-person-badge"></i> Doctor Management</h2>
+                <div>
+                    <a href="/admin/accounts/user/add/" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add New Doctor
+                    </a>
+                    <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 opacity-75">Total Doctors</h6>
+                    <h2>{{ total_doctors }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 opacity-75">Active Doctors</h6>
+                    <h2>{{ active_doctors }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 opacity-75">Inactive</h6>
+                    <h2>{{ total_doctors|add:"-"|add:active_doctors }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctors List -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-list"></i> All Doctors</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Full Name</th>
+                                    <th>Specialization</th>
+                                    <th>Consultation Fee</th>
+                                    <th>Status</th>
+                                    <th>Schedules</th>
+                                    <th>Total Appointments</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in doctor_stats %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ stat.doctor.username }}</strong>
+                                    </td>
+                                    <td>{{ stat.doctor.get_full_name|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ stat.specialization }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="fee-display me-2" id="fee-display-{{ stat.doctor.id }}">
+                                                <strong class="text-success">৳{{ stat.doctor.consultation_fee|floatformat:0 }}</strong>
+                                            </span>
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="editFee({{ stat.doctor.id }}, {{ stat.doctor.consultation_fee }})"
+                                                    title="Edit Fee">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if stat.doctor.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ stat.schedules }} Schedule(s)</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ stat.total_appointments }} appointment(s)</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/admin/accounts/user/{{ stat.doctor.id }}/change/" 
+                                               class="btn btn-outline-primary" 
+                                               title="Edit Doctor">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="/admin/appointments/doctorschedule/?doctor__id__exact={{ stat.doctor.id }}" 
+                                               class="btn btn-outline-success" 
+                                               title="Manage Schedules">
+                                                <i class="bi bi-calendar3"></i>
+                                            </a>
+                                            <a href="{% url 'appointments:appointment_list' %}?doctor={{ stat.doctor.id }}" 
+                                               class="btn btn-outline-info" 
+                                               title="View Appointments">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        No doctors found. 
+                                        <a href="/admin/accounts/user/add/" class="btn btn-sm btn-primary ms-2">
+                                            <i class="bi bi-plus-circle"></i> Add First Doctor
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0"><i class="bi bi-link-45deg"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/admin/appointments/doctorschedule/add/" class="btn btn-outline-success w-100">
+                                <i class="bi bi-calendar-plus"></i><br>Add Doctor Schedule
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/appointments/doctorschedule/" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-calendar3"></i><br>View All Schedules
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/accounts/user/?role__exact=DOCTOR" class="btn btn-outline-info w-100">
+                                <i class="bi bi-person-lines-fill"></i><br>Manage in Admin Panel
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'appointments:appointment_list' %}" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-calendar-check"></i><br>View All Appointments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Fee Modal -->
+<div class="modal fade" id="editFeeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-cash-coin"></i> Update Consultation Fee</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="feeUpdateForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="doctorId" name="doctor_id">
+                    <div class="mb-3">
+                        <label class="form-label">Consultation Fee (৳)</label>
+                        <input type="number" 
+                               class="form-control form-control-lg" 
+                               id="consultationFee" 
+                               name="consultation_fee"
+                               step="0.01"
+                               min="0"
+                               required>
+                        <div class="form-text">This fee will be used when reception books appointments</div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Note:</strong> This fee will be automatically filled when receptionist selects this doctor during appointment booking.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveFee()">
+                    <i class="bi bi-check-circle"></i> Update Fee
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let editFeeModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    editFeeModal = new bootstrap.Modal(document.getElementById('editFeeModal'));
+});
+
+function editFee(doctorId, currentFee) {
+    document.getElementById('doctorId').value = doctorId;
+    document.getElementById('consultationFee').value = currentFee;
+    editFeeModal.show();
+}
+
+function saveFee() {
+    const doctorId = document.getElementById('doctorId').value;
+    const newFee = document.getElementById('consultationFee').value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    if (!newFee || newFee < 0) {
+        alert('Please enter a valid fee amount');
+        return;
+    }
+    
+    // Show loading state
+    const saveBtn = event.target;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
+    
+    fetch('/accounts/update-doctor-fee/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            doctor_id: doctorId,
+            consultation_fee: newFee
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the displayed fee
+            document.getElementById('fee-display-' + doctorId).innerHTML = 
+                '<strong class="text-success">৳' + parseFloat(newFee).toFixed(0) + '</strong>';
+            
+            // Show success message
+            showAlert('Success! Consultation fee updated to ৳' + parseFloat(newFee).toFixed(0), 'success');
+            
+            // Close modal
+            editFeeModal.hide();
+        } else {
+            showAlert('Error: ' + (data.error || 'Failed to update fee'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error updating fee. Please try again.', 'danger');
+    })
+    .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Fee';
+    });
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

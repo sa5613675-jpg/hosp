@@ -1,0 +1,7 @@
+● hosp.service - Nazipuruhs Hospital Management System
+     Loaded: loaded (]8;;file://vmi2823196/etc/systemd/system/hosp.service/etc/systemd/system/hosp.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: activating (auto-restart) (Result: exit-code) since Sun 2025-11-02 08:28:29 CET; 6s ago
+    Process: 1111499 ExecStart=/var/www/hosp/venv/bin/gunicorn hosp.asgi:application -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8005 --workers 4 --timeout 120 --access-logfile /var/www/hosp/hosp_access.log --error-logfile /var/www/hosp/hosp_error.log [0;1;31m(code=exited, status=3)[0m
+   Main PID: 1111499 (code=exited, status=3)
+     Status: "[0;1;36mGunicorn arbiter booted[0m"
+        CPU: 579ms

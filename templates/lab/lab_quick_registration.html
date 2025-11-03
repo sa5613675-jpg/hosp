@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lab Quick Registration{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-person-plus-fill"></i> Lab Quick Registration</h2>
+                <a href="{% url 'lab:lab_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Patient Information & Test Selection</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="quickRegForm">
+                        {% csrf_token %}
+                        
+                        <!-- Patient Info -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Full Name *</strong></label>
+                                <input type="text" name="full_name" class="form-control" required placeholder="Enter patient full name">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><strong>Age *</strong></label>
+                                <input type="number" name="age" class="form-control" required min="1" max="120" placeholder="Age">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><strong>Gender *</strong></label>
+                                <select name="gender" class="form-select" required>
+                                    <option value="">Select</option>
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                    <option value="O">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Phone Number *</strong></label>
+                                <input type="text" name="phone" class="form-control" required placeholder="01XXXXXXXXX">
+                                <small class="text-muted">Used to check if patient already exists</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Address</strong></label>
+                                <input type="text" name="address" class="form-control" placeholder="Patient address">
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>City</strong></label>
+                                <input type="text" name="city" class="form-control" value="Dhaka" placeholder="City">
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Test Selection -->
+                        <h5 class="mb-3">Select Tests *</h5>
+                        
+                        <div class="mb-3">
+                            <input type="text" id="testSearch" class="form-control" placeholder="🔍 Search tests...">
+                        </div>
+
+                        <div id="testCategories">
+                            {% for category, tests in tests_by_category.items %}
+                            <div class="mb-3">
+                                <h6 class="text-primary">{{ category }}</h6>
+                                <div class="row">
+                                    {% for test in tests %}
+                                    <div class="col-md-6 mb-2 test-item" data-test-name="{{ test.test_name|lower }}">
+                                        <div class="form-check p-3 border rounded">
+                                            <input class="form-check-input test-checkbox" type="checkbox" 
+                                                   name="tests" value="{{ test.id }}" 
+                                                   id="test{{ test.id }}" 
+                                                   data-price="{{ test.price }}">
+                                            <label class="form-check-label" for="test{{ test.id }}">
+                                                <strong>{{ test.test_name }}</strong>
+                                                <br>
+                                                <span class="text-muted small">{{ test.test_code }}</span>
+                                                <br>
+                                                <span class="badge bg-success">৳{{ test.price }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="alert alert-info mt-4" id="totalAmount">
+                            <strong>Total Amount: ৳<span id="totalPrice">0</span></strong>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Create Order & Send to Billing
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">Instructions</h6>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li>Enter patient details</li>
+                        <li>Select required lab tests</li>
+                        <li>Click "Create Order"</li>
+                        <li>System will create patient (if new)</li>
+                        <li>Lab order will be generated</li>
+                        <li>You'll be redirected to reception for billing</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">Quick Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Phone number is used to find existing patients</li>
+                        <li>Select multiple tests at once</li>
+                        <li>Use search to find tests quickly</li>
+                        <li>Total amount updates automatically</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calculate total
+document.querySelectorAll('.test-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        let total = 0;
+        document.querySelectorAll('.test-checkbox:checked').forEach(cb => {
+            total += parseFloat(cb.dataset.price);
+        });
+        document.getElementById('totalPrice').textContent = total.toFixed(2);
+    });
+});
+
+// Search tests
+document.getElementById('testSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    document.querySelectorAll('.test-item').forEach(item => {
+        const testName = item.dataset.testName;
+        if (testName.includes(searchTerm)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// Form validation
+document.getElementById('quickRegForm').addEventListener('submit', function(e) {
+    const checkedTests = document.querySelectorAll('.test-checkbox:checked');
+    if (checkedTests.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one test');
+        return false;
+    }
+});
+</script>
+
+{% endblock %}

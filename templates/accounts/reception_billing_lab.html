@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reception Billing - Lab Order{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-cash-stack"></i> Reception Billing - Lab Order</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Order Details -->
+                    <div class="alert alert-info">
+                        <h5>Order: {{ lab_order.order_number }}</h5>
+                        <p class="mb-0">
+                            <strong>Patient:</strong> {{ lab_order.patient.get_full_name }} ({{ lab_order.patient.patient_id }})<br>
+                            <strong>Phone:</strong> {{ lab_order.patient.phone }}<br>
+                            <strong>Date:</strong> {{ lab_order.ordered_at|date:"d M Y, h:i A" }}
+                        </p>
+                    </div>
+
+                    <!-- Tests List -->
+                    <h5 class="mb-3">Tests Ordered:</h5>
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Test Name</th>
+                                <th>Code</th>
+                                <th class="text-end">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for test in lab_order.tests.all %}
+                            <tr>
+                                <td>{{ test.test_name }}</td>
+                                <td>{{ test.test_code }}</td>
+                                <td class="text-end">৳{{ test.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-info">
+                                <th colspan="2" class="text-end">Original Total:</th>
+                                <th class="text-end" id="originalTotal">৳{{ lab_order.total_amount }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Billing Form -->
+                    <form method="post" id="billingForm">
+                        {% csrf_token %}
+                        
+                        <hr>
+
+                        <!-- PC Code Section -->
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label"><strong>PC Code / Referral Code (Optional)</strong></label>
+                                <input type="text" name="pc_code" id="pcCode" class="form-control" 
+                                       placeholder="Enter 5-digit PC code (e.g., 10001, 20001)" 
+                                       maxlength="20" style="text-transform: uppercase;">
+                                <small class="text-muted">Enter the unique PC code for commission tracking</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-info w-100" id="verifyPC">
+                                    <i class="bi bi-search"></i> Verify Code
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success" id="pcInfo" style="display: none;">
+                            <h6><i class="bi bi-person-check"></i> PC Member Found!</h6>
+                            <strong>Name:</strong> <span id="pcName"></span><br>
+                            <strong>Code:</strong> <span id="pcCodeDisplay"></span><br>
+                            <strong>Commission:</strong> <span id="pcCommission">0</span>%<br>
+                            <hr class="my-2">
+                            <strong>Commission Amount:</strong> ৳<span id="commissionAmount">0</span><br>
+                            <strong>Admin Revenue:</strong> ৳<span id="adminRevenue">0</span>
+                        </div>
+
+                        <div class="alert alert-danger" id="pcError" style="display: none;">
+                            <i class="bi bi-exclamation-triangle"></i> Invalid or inactive PC code
+                        </div>
+
+                        <!-- Discount Section -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-warning">
+                                <strong>Discount (Optional)</strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Discount Type</strong></label>
+                                        <select name="discount_type" id="discountType" class="form-select">
+                                            <option value="">-- No Discount --</option>
+                                            <option value="percentage">Percentage (%)</option>
+                                            <option value="amount">Fixed Amount (৳)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Discount Value</strong></label>
+                                        <input type="number" name="discount_value" id="discountValue" 
+                                               class="form-control" min="0" step="0.01" value="0">
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-success mb-0">
+                                    <strong>Discount Amount:</strong> ৳<span id="discountAmount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Final Amount -->
+                        <div class="alert alert-primary">
+                            <h4 class="mb-0">
+                                <strong>Final Amount to Pay: ৳<span id="finalAmount">{{ lab_order.total_amount }}</span></strong>
+                            </h4>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle-fill"></i> Confirm Payment & Complete
+                            </button>
+                            <a href="{% url 'lab:order_detail' lab_order.id %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const originalTotal = {{ lab_order.total_amount }};
+let pcData = null;  // Store verified PC member data
+
+// Verify PC Code via AJAX
+document.getElementById('verifyPC').addEventListener('click', function() {
+    const pcCode = document.getElementById('pcCode').value.trim().toUpperCase();
+    
+    if (!pcCode) {
+        document.getElementById('pcError').style.display = 'none';
+        document.getElementById('pcInfo').style.display = 'none';
+        pcData = null;
+        calculateBilling();
+        return;
+    }
+    
+    // AJAX request to verify PC code
+    fetch(`/accounts/api/pc-lookup/?code=${pcCode}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                pcData = data;
+                document.getElementById('pcInfo').style.display = 'block';
+                document.getElementById('pcError').style.display = 'none';
+                document.getElementById('pcName').textContent = data.name;
+                document.getElementById('pcCodeDisplay').textContent = data.pc_code;
+                document.getElementById('pcCommission').textContent = data.commission_percentage;
+                calculateBilling();
+            } else {
+                pcData = null;
+                document.getElementById('pcInfo').style.display = 'none';
+                document.getElementById('pcError').style.display = 'block';
+                calculateBilling();
+            }
+        })
+        .catch(error => {
+            console.error('Error verifying PC code:', error);
+            pcData = null;
+            document.getElementById('pcInfo').style.display = 'none';
+            document.getElementById('pcError').textContent = 'Error verifying code. Please try again.';
+            document.getElementById('pcError').style.display = 'block';
+            calculateBilling();
+        });
+});
+
+// Also verify when Enter key is pressed in PC code input
+document.getElementById('pcCode').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('verifyPC').click();
+    }
+});
+
+// Clear PC info when code is changed
+document.getElementById('pcCode').addEventListener('input', function() {
+    if (pcData) {
+        document.getElementById('pcInfo').style.display = 'none';
+        document.getElementById('pcError').style.display = 'none';
+        pcData = null;
+        calculateBilling();
+    }
+});
+
+function calculateBilling() {
+    // Get PC commission if verified
+    const commissionPercent = pcData ? parseFloat(pcData.commission_percentage) : 0;
+    
+    // Get discount
+    const discountType = document.getElementById('discountType').value;
+    const discountValue = parseFloat(document.getElementById('discountValue').value || 0);
+    
+    let discountAmount = 0;
+    
+    if (discountType === 'percentage') {
+        discountAmount = originalTotal * (discountValue / 100);
+    } else if (discountType === 'amount') {
+        discountAmount = discountValue;
+    }
+    
+    // Calculate final amount after discount
+    const afterDiscount = originalTotal - discountAmount;
+    
+    // Calculate PC commission on final amount
+    const commissionAmount = afterDiscount * (commissionPercent / 100);
+    const adminRevenue = afterDiscount - commissionAmount;
+    
+    // Update UI
+    document.getElementById('discountAmount').textContent = discountAmount.toFixed(2);
+    document.getElementById('finalAmount').textContent = afterDiscount.toFixed(2);
+    
+    // Update PC commission amounts
+    if (commissionPercent > 0 && pcData) {
+        document.getElementById('commissionAmount').textContent = commissionAmount.toFixed(2);
+        document.getElementById('adminRevenue').textContent = adminRevenue.toFixed(2);
+    }
+}
+
+// Attach event listeners
+document.getElementById('discountType').addEventListener('change', calculateBilling);
+document.getElementById('discountValue').addEventListener('input', calculateBilling);
+
+// Initial calculation
+calculateBilling();
+
+// Form validation
+document.getElementById('billingForm').addEventListener('submit', function(e) {
+    const finalAmount = parseFloat(document.getElementById('finalAmount').textContent);
+    if (finalAmount < 0) {
+        e.preventDefault();
+        alert('Discount cannot exceed the original amount!');
+        return false;
+    }
+    return confirm('Confirm payment of ৳' + finalAmount.toFixed(2) + '?');
+});
+</script>
+
+{% endblock %}

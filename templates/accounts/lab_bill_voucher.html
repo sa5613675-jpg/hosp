@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lab Bill Voucher{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .voucher {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+    
+    .voucher {
+        border: 2px solid #333;
+        padding: 20px;
+        background: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row no-print mb-3">
+        <div class="col-12">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer"></i> Print Voucher
+            </button>
+            <a href="{% url 'accounts:lab_assistant_dashboard' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+            {% if lab_bill.payment_status == 'PENDING' %}
+            <a href="{% url 'accounts:collect_lab_payment' lab_bill.id %}" class="btn btn-success float-end">
+                <i class="bi bi-cash-coin"></i> Collect Payment
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="voucher">
+                <!-- Hospital Header -->
+                <div class="text-center mb-4">
+                    <h3>নাজিরপুর উপজেলা স্বাস্থ্য কমপ্লেক্স</h3>
+                    <h4>Nazirpur Upazila Health Complex</h4>
+                    <p class="mb-0">Nazirpur, Pirojpur</p>
+                    <p>Phone: 04662-75123</p>
+                </div>
+
+                <hr style="border: 2px solid #333;">
+
+                <!-- Voucher Title -->
+                <div class="text-center mb-4">
+                    <h4 class="text-primary"><strong>LAB TEST BILL / VOUCHER</strong></h4>
+                    <h5>Bill #: {{ lab_bill.bill_number }}</h5>
+                </div>
+
+                <!-- Patient & Bill Info -->
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <p class="mb-1"><strong>Patient Name:</strong> {{ lab_bill.patient.name }}</p>
+                        <p class="mb-1"><strong>Phone:</strong> {{ lab_bill.patient.phone }}</p>
+                        <p class="mb-1"><strong>Age:</strong> {{ lab_bill.patient.age }} years</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <p class="mb-1"><strong>Date:</strong> {{ lab_bill.created_at|date:"d M Y" }}</p>
+                        <p class="mb-1"><strong>Time:</strong> {{ lab_bill.created_at|date:"g:i A" }}</p>
+                        {% if lab_bill.appointment %}
+                        <p class="mb-1"><strong>Serial #:</strong> {{ lab_bill.appointment.serial_number }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Lab Tests Table -->
+                <h6 class="text-primary mb-3">Lab Tests Ordered:</h6>
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Test Name</th>
+                            <th>Test Code</th>
+                            <th class="text-end">Price (৳)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for test in lab_bill.tests.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><strong>{{ test.test_name }}</strong></td>
+                            <td>{{ test.test_code }}</td>
+                            <td class="text-end">{{ test.price|floatformat:0 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Bill Summary -->
+                <div class="row mt-4">
+                    <div class="col-6 offset-6">
+                        <table class="table">
+                            <tr>
+                                <td><strong>Subtotal:</strong></td>
+                                <td class="text-end"><strong>৳{{ lab_bill.subtotal|floatformat:0 }}</strong></td>
+                            </tr>
+                            {% if lab_bill.discount > 0 %}
+                            <tr>
+                                <td><strong>Discount:</strong></td>
+                                <td class="text-end text-danger"><strong>- ৳{{ lab_bill.discount|floatformat:0 }}</strong></td>
+                            </tr>
+                            {% endif %}
+                            <tr class="table-success">
+                                <td><h5><strong>Total Amount:</strong></h5></td>
+                                <td class="text-end"><h5><strong>৳{{ lab_bill.total_amount|floatformat:0 }}</strong></h5></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Payment Status -->
+                <div class="alert {% if lab_bill.payment_status == 'PAID' %}alert-success{% else %}alert-warning{% endif %} mt-3">
+                    <strong>Payment Status:</strong> 
+                    {% if lab_bill.payment_status == 'PAID' %}
+                        <span class="badge bg-success">PAID</span>
+                        <p class="mb-0 mt-2">
+                            <strong>Paid Amount:</strong> ৳{{ lab_bill.paid_amount|floatformat:0 }}<br>
+                            <strong>Payment Method:</strong> {{ lab_bill.payment_method }}<br>
+                            <strong>Collected By:</strong> {{ lab_bill.collected_by.get_full_name }}<br>
+                            <strong>Collected At:</strong> {{ lab_bill.collected_at|date:"d M Y, g:i A" }}
+                        </p>
+                        
+                        {% comment "PC Commission Info" %}
+                        {% if lab_bill.pc_transaction %}
+                        <div class="mt-2 pt-2" style="border-top: 1px dashed #ccc;">
+                            <strong class="text-primary">PC Commission:</strong><br>
+                            <small>
+                                Code: {{ lab_bill.pc_transaction.pc_member.pc_code }} - {{ lab_bill.pc_transaction.pc_member.name }}<br>
+                                Commission: {{ lab_bill.pc_transaction.commission_percentage }}% = ৳{{ lab_bill.pc_transaction.commission_amount|floatformat:0 }}
+                            </small>
+                        </div>
+                        {% endif %}
+                        {% endcomment %}
+                    {% else %}
+                        <span class="badge bg-warning text-dark">PENDING PAYMENT</span>
+                        <p class="mb-0 mt-2">Please pay at the reception counter</p>
+                    {% endif %}
+                </div>
+
+                {% if lab_bill.notes %}
+                <div class="mt-3">
+                    <strong>Notes:</strong> {{ lab_bill.notes }}
+                </div>
+                {% endif %}
+
+                <hr class="mt-4">
+
+                <!-- Footer -->
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <p class="mb-0"><strong>Created By:</strong></p>
+                        <p>{{ lab_bill.created_by.get_full_name }}</p>
+                        <p class="mb-0">Lab Assistant</p>
+                    </div>
+                    {% if lab_bill.payment_status == 'PAID' %}
+                    <div class="col-6 text-end">
+                        <p class="mb-0"><strong>Collected By:</strong></p>
+                        <p>{{ lab_bill.collected_by.get_full_name }}</p>
+                        <p class="mb-0">Receptionist</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted"><small>This is a computer-generated document. No signature required.</small></p>
+                    <p class="text-muted"><small>For any queries, please contact the lab department.</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

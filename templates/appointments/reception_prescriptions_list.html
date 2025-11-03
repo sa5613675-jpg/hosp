@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Prescriptions - Reception{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-panel {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    .prescription-table {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .prescription-row {
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 20px;
+        transition: all 0.2s ease;
+    }
+    .prescription-row:hover {
+        background: #f8f9fa;
+    }
+    .prescription-row:last-child {
+        border-bottom: none;
+    }
+    .badge-printed {
+        background: #28a745;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+    .badge-unprinted {
+        background: #ffc107;
+        color: #000;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+    .btn-print-rx {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-size: 0.9rem;
+    }
+    .btn-print-rx:hover {
+        background: #0056b3;
+        color: white;
+    }
+    .rx-number {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-file-medical-fill"></i> Prescriptions Management</h2>
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-panel">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-calendar"></i> Date</label>
+                <input type="date" name="date" class="form-control form-control-lg" 
+                       value="{{ selected_date }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-person-badge"></i> Doctor</label>
+                <select name="doctor" class="form-select form-select-lg">
+                    <option value="">All Doctors</option>
+                    {% for doc in doctors %}
+                    <option value="{{ doc.id }}" {% if selected_doctor == doc.id|stringformat:"s" %}selected{% endif %}>
+                        Dr. {{ doc.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-printer"></i> Status</label>
+                <select name="status" class="form-select form-select-lg">
+                    <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All</option>
+                    <option value="unprinted" {% if selected_status == 'unprinted' %}selected{% endif %}>Unprinted</option>
+                    <option value="printed" {% if selected_status == 'printed' %}selected{% endif %}>Printed</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-light btn-lg w-100">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Prescriptions List -->
+    <div class="prescription-table">
+        <div class="prescription-row" style="background: #f8f9fa; font-weight: 600;">
+            <div class="row">
+                <div class="col-md-2">Rx Number</div>
+                <div class="col-md-3">Patient</div>
+                <div class="col-md-2">Doctor</div>
+                <div class="col-md-2">Time</div>
+                <div class="col-md-2">Status</div>
+                <div class="col-md-1">Action</div>
+            </div>
+        </div>
+
+        {% if prescriptions %}
+            {% for rx in prescriptions %}
+            <div class="prescription-row">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <div class="rx-number">{{ rx.prescription_number }}</div>
+                        <small class="text-muted">Serial: #{{ rx.appointment.serial_number }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <div><strong>{{ rx.patient.get_full_name }}</strong></div>
+                        <small class="text-muted">
+                            <i class="bi bi-telephone"></i> {{ rx.patient.phone }} |
+                            {{ rx.patient.age }}y, {{ rx.patient.get_gender_display }}
+                        </small>
+                    </div>
+                    <div class="col-md-2">
+                        <div><i class="bi bi-person-badge"></i> Dr. {{ rx.doctor.get_full_name }}</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div><i class="bi bi-clock"></i> {{ rx.created_at|time:"h:i A" }}</div>
+                        <small class="text-muted">{{ rx.created_at|date:"d M, Y" }}</small>
+                    </div>
+                    <div class="col-md-2">
+                        {% if rx.is_printed %}
+                            <span class="badge-printed">
+                                <i class="bi bi-check-circle"></i> Printed
+                            </span>
+                            {% if rx.printed_at %}
+                            <div><small class="text-muted">{{ rx.printed_at|time:"h:i A" }}</small></div>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge-unprinted">
+                                <i class="bi bi-exclamation-circle"></i> Not Printed
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-1">
+                        <a href="{% url 'appointments:prescription_print' rx.pk %}" 
+                           class="btn btn-print-rx"
+                           target="_blank">
+                            <i class="bi bi-printer"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="prescription-row text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                <h4 class="mt-3 text-muted">No prescriptions found</h4>
+                <p class="text-muted">Try adjusting your filters</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Summary -->
+    {% if prescriptions %}
+    <div class="mt-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="alert alert-info">
+                    <strong>Total:</strong> {{ prescriptions.count }} prescriptions
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="alert alert-success">
+                    <strong>Printed:</strong> {{ prescriptions|length }} 
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="alert alert-warning">
+                    <strong>Pending:</strong> {{ prescriptions|length }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh every 30 seconds if viewing unprinted prescriptions
+    {% if selected_status == 'unprinted' or selected_status == 'all' %}
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+    {% endif %}
+</script>
+{% endblock %}
