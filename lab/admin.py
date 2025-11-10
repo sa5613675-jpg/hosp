@@ -6,14 +6,18 @@ from .models import LabTest, LabOrder, LabResult, LabBill
 class LabTestAdmin(admin.ModelAdmin):
     """Admin for Lab Tests - add test names and prices"""
     
-    list_display = ['test_code', 'test_name', 'category', 'price', 'turnaround_time', 'is_active']
-    list_filter = ['category', 'is_active', 'created_at']
+    list_display = ['test_code', 'test_name', 'category', 'test_type', 'price', 'is_active']
+    list_filter = ['category', 'test_type', 'is_active', 'created_at']
     search_fields = ['test_code', 'test_name', 'description']
-    list_editable = ['price', 'is_active']
+    list_editable = ['price', 'is_active', 'test_type']
     
     fieldsets = (
         ('Test Information', {
-            'fields': ('test_code', 'test_name', 'category', 'description')
+            'fields': ('test_code', 'test_name', 'description')
+        }),
+        ('Classification', {
+            'fields': ('category', 'test_type'),
+            'description': 'Test type affects PC commission rates. Digital tests typically have higher commission.'
         }),
         ('Pricing', {
             'fields': ('price',)

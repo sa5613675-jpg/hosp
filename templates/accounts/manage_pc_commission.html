@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage PC Commission - {{ pc_member.name }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Manage Commission Rates - {{ pc_member.name }}</h2>
+            <p class="text-muted">PC Code: {{ pc_member.pc_code }} | Type: {{ pc_member.get_member_type_display }}</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="commission_percentage" class="form-label">Default Commission Rate (%)</label>
+                            <input type="number" step="0.01" min="0" max="100" 
+                                   class="form-control" id="commission_percentage" 
+                                   name="commission_percentage" 
+                                   value="{{ pc_member.commission_percentage }}"
+                                   required>
+                            <div class="form-text">Default commission rate for non-test services</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="normal_test_commission" class="form-label">Normal Test Commission Rate (%)</label>
+                            <input type="number" step="0.01" min="0" max="100" 
+                                   class="form-control" id="normal_test_commission" 
+                                   name="normal_test_commission" 
+                                   value="{{ pc_member.normal_test_commission }}"
+                                   required>
+                            <div class="form-text">Commission rate for normal laboratory tests</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="digital_test_commission" class="form-label">Digital Test Commission Rate (%)</label>
+                            <input type="number" step="0.01" min="0" max="100" 
+                                   class="form-control" id="digital_test_commission" 
+                                   name="digital_test_commission" 
+                                   value="{{ pc_member.digital_test_commission }}"
+                                   required>
+                            <div class="form-text">Commission rate for digital laboratory tests</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">Update Commission Rates</button>
+                            <a href="{% url 'accounts:pc_member_detail' pc_code=pc_member.pc_code %}" 
+                               class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Commission Rate Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Member Type Rates:</h6>
+                    <ul>
+                        <li><strong>General Member:</strong> Normal: 15%, Digital: 20%</li>
+                        <li><strong>Lifetime Member:</strong> Normal: 20%, Digital: 25%</li>
+                        <li><strong>Premium Member:</strong> Normal: 25%, Digital: 30%</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Digital tests typically have higher commission rates due to their specialized nature.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Member Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Referrals
+                            <span class="badge bg-primary rounded-pill">{{ pc_member.total_referrals }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Current Due Amount
+                            <span class="badge bg-info rounded-pill">৳{{ pc_member.due_amount }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Member Since
+                            <span class="badge bg-secondary">{{ pc_member.created_at|date:"d M Y" }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

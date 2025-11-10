@@ -19,7 +19,7 @@ def pc_member_list(request, member_type):
         return redirect('accounts:dashboard')
     
     # Validate member type
-    valid_types = {'GENERAL', 'LIFETIME', 'INVESTOR'}
+    valid_types = {'GENERAL', 'LIFETIME', 'PREMIUM'}
     if member_type not in valid_types:
         messages.error(request, "Invalid member type.")
         return redirect('accounts:pc_dashboard')
@@ -48,7 +48,7 @@ def pc_member_list(request, member_type):
     type_info = {
         'GENERAL': {'name': 'General', 'percentage': 30, 'color': 'secondary'},
         'LIFETIME': {'name': 'Lifetime', 'percentage': 35, 'color': 'primary'},
-        'INVESTOR': {'name': 'Investor', 'percentage': 50, 'color': 'success'},
+        'PREMIUM': {'name': 'Premium', 'percentage': 50, 'color': 'success'},
     }
     
     context = {
@@ -96,7 +96,7 @@ def pc_member_create(request):
         commission_map = {
             'GENERAL': 30,
             'LIFETIME': 35,
-            'INVESTOR': 50
+            'PREMIUM': 50
         }
         
         if member_type not in commission_map:
@@ -128,7 +128,7 @@ def pc_member_create(request):
     default_commissions = {
         'GENERAL': 30,
         'LIFETIME': 35,
-        'INVESTOR': 50,
+        'PREMIUM': 50,
     }
     
     context = {
@@ -277,10 +277,15 @@ def pc_dashboard(request):
             Sum('commission_amount'))['commission_amount__sum'] or 0,
     }
     investor_stats = {
-        'count': PCMember.objects.filter(member_type='INVESTOR', is_active=True).count(),
-        'commission': PCTransaction.objects.filter(pc_member__member_type='INVESTOR').aggregate(
+        'count': PCMember.objects.filter(member_type='PREMIUM', is_active=True).count(),
+        'commission': PCTransaction.objects.filter(pc_member__member_type='PREMIUM').aggregate(
             Sum('commission_amount'))['commission_amount__sum'] or 0,
     }
+    
+    # Get default rates for each member type (from first member of each type or defaults)
+    general_rates = PCMember.objects.filter(member_type='GENERAL').first()
+    lifetime_rates = PCMember.objects.filter(member_type='LIFETIME').first()
+    premium_rates = PCMember.objects.filter(member_type='PREMIUM').first()
     
     context = {
         'total_members': total_members,
@@ -302,6 +307,9 @@ def pc_dashboard(request):
         'lifetime_commission': lifetime_stats['commission'],
         'investor_count': investor_stats['count'],
         'investor_commission': investor_stats['commission'],
+        'general_rates': general_rates,
+        'lifetime_rates': lifetime_rates,
+        'premium_rates': premium_rates,
     }
     
     return render(request, 'accounts/pc_dashboard.html', context)

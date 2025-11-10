@@ -12,10 +12,33 @@ from lab.models import LabTest, LabOrder, LabResult
 from pharmacy.models import Drug, PharmacySale, SaleItem
 from finance.models import Income, Expense, Investor
 from survey.models import CanteenSale, CanteenItem, FeedbackSurvey
+from .models import PCMember, PCTransaction
 
 def landing_page(request):
     """Public landing page for the hospital website"""
+    if request.user.is_authenticated:
+        return redirect('accounts:dashboard')
     return render(request, 'accounts/landing_page.html')
+
+def login_view(request):
+    """Handle user login"""
+    if request.user.is_authenticated:
+        return redirect('accounts:dashboard')
+        
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        if username and password:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                next_url = request.GET.get('next', 'accounts:dashboard')
+                return redirect(next_url)
+            else:
+                messages.error(request, 'Invalid username or password.')
+    
+    return render(request, 'accounts/login.html')
 
 #@login_required
 def dashboard(request):
@@ -39,6 +62,54 @@ def dashboard(request):
         messages.error(request, "You don't have permission to access any dashboard.")
         return redirect('accounts:login')
 
+
+@login_required
+def manage_pc_commission(request, pc_code):
+    """Manage commission rates for a PC member"""
+    if not request.user.is_admin:
+        messages.error(request, "You don't have permission to manage PC commission rates.")
+        return redirect('accounts:dashboard')
+    
+    pc_member = get_object_or_404(PCMember, pc_code=pc_code)
+    
+    if request.method == 'POST':
+        # Update commission rates
+        pc_member.commission_percentage = request.POST.get('commission_percentage', 15.00)
+        pc_member.normal_test_commission = request.POST.get('normal_test_commission', 15.00)
+        pc_member.digital_test_commission = request.POST.get('digital_test_commission', 20.00)
+        pc_member.save()
+        
+        messages.success(request, f'Commission rates updated for {pc_member.name}')
+        return redirect('accounts:pc_member_detail', pc_code=pc_code)
+    
+    context = {
+        'pc_member': pc_member,
+        'member_types': PCMember.MEMBER_TYPE_CHOICES,
+    }
+    return render(request, 'accounts/manage_pc_commission.html', context)
+
+@login_required
+def update_default_rates(request, member_type):
+    """Update default commission rates for all members of a specific type"""
+    if not request.user.is_admin:
+        messages.error(request, "You don't have permission to update commission rates.")
+        return redirect('accounts:dashboard')
+    
+    if request.method == 'POST':
+        normal_rate = request.POST.get('normal_test_commission')
+        digital_rate = request.POST.get('digital_test_commission')
+        other_rate = request.POST.get('commission_percentage')
+        
+        # Update all members of this type
+        updated_count = PCMember.objects.filter(member_type=member_type).update(
+            normal_test_commission=normal_rate,
+            digital_test_commission=digital_rate,
+            commission_percentage=other_rate
+        )
+        
+        messages.success(request, f'Updated commission rates for {updated_count} {member_type} members')
+    
+    return redirect('accounts:pc_dashboard')
 
 @login_required
 def admin_dashboard(request):
@@ -1665,10 +1736,35 @@ def reception_billing_lab(request, order_id):
                     from .models import PCMember, PCTransaction
                     pc_member = PCMember.objects.get(pc_code=pc_code, is_active=True)
                     
-                    # Calculate commission on final amount (after discount)
-                    commission_percentage = float(pc_member.commission_percentage)
-                    commission_amount = final_amount * (commission_percentage / 100)
-                    admin_amount = final_amount - commission_amount
+                    # Get test types in the order
+                    from .models_commission import PCCommissionRate
+                    from lab.models import LabTest
+                    
+                    # Calculate commission for each test type separately
+                    commission_amount = 0
+                    admin_amount = final_amount
+                    
+                    # Group tests by type and calculate commission
+                    for test in lab_order.tests.all():
+                        test_amount = float(test.price)
+                        test_share = test_amount / float(lab_order.total_amount)
+                        test_final_amount = final_amount * test_share
+                        
+                        try:
+                            # Get commission rate for this member type and test type
+                            commission_rate = PCCommissionRate.objects.get(
+                                member_type=pc_member.member_type,
+                                test_type=test.test_type
+                            )
+                            test_commission = test_final_amount * (float(commission_rate.commission_percentage) / 100)
+                            commission_amount += test_commission
+                            admin_amount -= test_commission
+                        except PCCommissionRate.DoesNotExist:
+                            # Use default commission rate if specific rate not found
+                            default_commission = float(pc_member.commission_percentage)
+                            test_commission = test_final_amount * (default_commission / 100)
+                            commission_amount += test_commission
+                            admin_amount -= test_commission
                     
                     # Create PC Transaction
                     pc_transaction = PCTransaction.objects.create(
@@ -1692,12 +1788,14 @@ def reception_billing_lab(request, order_id):
             
             # Record income
             from finance.models import Income
-            income = Income.objects.create(
+            from django.utils import timezone
+            
+            Income.objects.create(
                 source='LAB_TEST',
                 amount=final_amount,
+                date=timezone.now().date(),
                 description=f'Lab Order {lab_order.order_number} - {lab_order.patient.get_full_name()}',
-                recorded_by=request.user,
-                patient=lab_order.patient
+                recorded_by=request.user
             )
             
             # Mark as paid

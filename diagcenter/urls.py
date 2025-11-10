@@ -28,6 +28,9 @@ urlpatterns = [
     # Public landing page
     path("", account_views.landing_page, name="home"),
     
+    # Include accounts URLs
+    path("accounts/", include("accounts.urls")),
+    
     # Authentication URLs (at root level for easy access)
     path("login/", account_views.user_login, name="login"),
     path("logout/", account_views.user_logout, name="logout"),

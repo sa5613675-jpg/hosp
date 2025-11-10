@@ -134,23 +134,30 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'accounts:pc_member_detail' member.pc_code %}" 
-                               class="btn btn-sm btn-outline-primary" 
-                               title="View Details">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="{% url 'accounts:pc_transaction_create' %}?member={{ member.pk }}" 
-                               class="btn btn-sm btn-success" 
-                               title="Add Transaction">
-                                <i class="bi bi-plus-circle"></i>
-                            </a>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'accounts:pc_member_detail' member.pc_code %}" 
+                                   class="btn btn-outline-primary" 
+                                   title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'accounts:manage_pc_commission' member.pc_code %}" 
+                                   class="btn btn-outline-warning" 
+                                   title="Edit Commission Rates">
+                                    <i class="bi bi-percent"></i>
+                                </a>
+                                <a href="{% url 'accounts:pc_transaction_create' %}?member={{ member.pk }}" 
+                                   class="btn btn-outline-success" 
+                                   title="Add Transaction">
+                                    <i class="bi bi-plus-circle"></i>
+                                </a>
+                            </div>
                             {% if member.due_amount > 0 %}
                             <button type="button"
-                                    class="btn btn-sm btn-warning"
+                                    class="btn btn-sm btn-warning mt-1"
                                     data-bs-toggle="modal" 
                                     data-bs-target="#payModal{{ member.pc_code }}"
                                     title="Mark as Paid (৳{{ member.due_amount|floatformat:2 }})">
-                                <i class="bi bi-cash-coin"></i> Paid
+                                <i class="bi bi-cash-coin"></i> Pay
                             </button>
                             
                             <!-- Payment Confirmation Modal -->

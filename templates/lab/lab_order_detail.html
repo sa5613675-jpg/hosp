@@ -78,7 +78,7 @@
       </div>
       {% endif %}
 
-      {% if order.status in ['SAMPLE_COLLECTED','IN_PROGRESS'] %}
+      {% if order.status == 'SAMPLE_COLLECTED' or order.status == 'IN_PROGRESS' %}
       <div class="mb-3">
         <a href="{% url 'lab:result_entry' order.id %}" class="btn btn-warning"><i class="fas fa-edit"></i> Enter Results</a>
       </div>

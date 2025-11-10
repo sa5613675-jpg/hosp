@@ -80,7 +80,7 @@ class LabTestForm(forms.ModelForm):
     class Meta:
         model = LabTest
         fields = [
-            'test_code', 'test_name', 'category', 'description',
+            'test_code', 'test_name', 'category', 'test_type', 'description',
             'price', 'sample_type', 'sample_volume',
             'preparation_instructions', 'turnaround_time', 'is_active'
         ]
@@ -96,6 +96,10 @@ class LabTestForm(forms.ModelForm):
                 'required': True
             }),
             'category': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True
+            }),
+            'test_type': forms.Select(attrs={
                 'class': 'form-select',
                 'required': True
             }),

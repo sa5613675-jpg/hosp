@@ -14,6 +14,77 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+# Production user credentials
+PRODUCTION_USERS = [
+    # Admin
+    {
+        'phone': '01332856000',
+        'password': '856000',
+        'name': 'Admin User',
+        'is_active': True,
+        'is_staff': True,
+        'is_admin': True,
+    },
+    # Doctors
+    {
+        'phone': '01712765762',
+        'password': '765762',
+        'name': 'Dr. Shakera',
+        'is_active': True,
+        'is_doctor': True,
+    },
+    {
+        'phone': '01761338884',
+        'password': '338884',
+        'name': 'Dr. Khaja',
+        'is_active': True,
+        'is_doctor': True,
+    },
+    {
+        'phone': '01312025152',
+        'password': '025152',
+        'name': 'Dr. Khalid',
+        'is_active': True,
+        'is_doctor': True,
+    },
+    {
+        'phone': '01770928782',
+        'password': '928782',
+        'name': 'Dr. Ayesha',
+        'is_active': True,
+        'is_doctor': True,
+    },
+    # Staff
+    {
+        'phone': '01332856002',
+        'password': '856002',
+        'name': 'Reception Staff',
+        'is_active': True,
+        'is_receptionist': True,
+    },
+    {
+        'phone': '01332856015',
+        'password': '856015',
+        'name': 'Canteen Staff',
+        'is_active': True,
+        'is_canteen_staff': True,
+    },
+    {
+        'phone': '01332856016',
+        'password': '856016',
+        'name': 'Pharmacy Staff',
+        'is_active': True,
+        'is_pharmacy_staff': True,
+    },
+    {
+        'phone': '01332856017',
+        'password': '856017',
+        'name': 'Lab Staff',
+        'is_active': True,
+        'is_lab_staff': True,
+    },
+]
+
 print("=" * 80)
 print("CREATING PRODUCTION ACCOUNTS FOR NAZIPURUHS HOSPITAL")
 print("=" * 80)

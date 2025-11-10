@@ -18,9 +18,20 @@ class LabTest(models.Model):
         ('OTHER', 'Other'),
     ]
     
+    TEST_TYPE_CHOICES = [
+        ('NORMAL', 'Normal Test'),
+        ('DIGITAL', 'Digital Test'),
+    ]
+    
     test_code = models.CharField(max_length=20, unique=True)
     test_name = models.CharField(max_length=200)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    test_type = models.CharField(
+        max_length=20,
+        choices=TEST_TYPE_CHOICES,
+        default='NORMAL',
+        help_text='Type of test - affects PC commission rates'
+    )
     description = models.TextField(blank=True)
     
     # Pricing

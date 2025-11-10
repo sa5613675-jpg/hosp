@@ -5,7 +5,10 @@ from . import pc_views
 app_name = 'accounts'
 
 urlpatterns = [
+    path('login/', views.login_view, name='login'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('pc-member/<str:pc_code>/commission/', views.manage_pc_commission, name='manage_pc_commission'),
+    path('pc-rates/update/<str:member_type>/', views.update_default_rates, name='update_default_rates'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-finance/', views.admin_finance_dashboard, name='admin_finance'),
     path('admin-finance/add-expense/', views.quick_add_expense, name='quick_add_expense'),

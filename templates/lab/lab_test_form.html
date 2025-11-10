@@ -75,6 +75,17 @@
                                 {% endif %}
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Test Type <span class="text-danger">*</span></label>
+                                {{ form.test_type }}
+                                {% if form.test_type.errors %}
+                                <div class="text-danger small mt-1">{{ form.test_type.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Normal or Digital - affects PC commission</small>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
                                 <label class="form-label">Turnaround Time <span class="text-danger">*</span></label>
                                 {{ form.turnaround_time }}
                                 {% if form.turnaround_time.errors %}
@@ -82,9 +93,6 @@
                                 {% endif %}
                                 <small class="form-text text-muted">e.g., 24 hours, Same day</small>
                             </div>
-                        </div>
-
-                        <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Sample Type <span class="text-danger">*</span></label>
                                 {{ form.sample_type }}
@@ -93,6 +101,9 @@
                                 {% endif %}
                                 <small class="form-text text-muted">e.g., Blood, Urine</small>
                             </div>
+                        </div>
+
+                        <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Sample Volume</label>
                                 {{ form.sample_volume }}

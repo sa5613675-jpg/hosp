@@ -25,22 +25,40 @@ SECRET_KEY = "django-insecure-$nn-cq=pudtd5s4gpa0+v#vo6do)l^e9^26-9#p=72@f@co9(n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']  # For development only
+ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1', '0.0.0.0']  # For development only
 
-# CSRF Settings - Allow all origins in development
+# CORS and CSRF Settings
+CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+CORS_ALLOW_CREDENTIALS = True
+
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
+    'http://localhost:8001',
     'http://127.0.0.1:8000',
+    'http://127.0.0.1:8001',
     'https://localhost:8000',
+    'https://localhost:8001',
     'https://127.0.0.1:8000',
+    'https://127.0.0.1:8001',
     'https://*.github.dev',
     'https://*.githubpreview.dev',
     'https://*.gitpod.io',
 ]
 
-# For development - disable CSRF if still having issues
-# CSRF_COOKIE_SECURE = False
-# CSRF_COOKIE_HTTPONLY = False
+# Session Settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_SECURE = False  # Set to True in production
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
+
+# Security Settings
+SESSION_COOKIE_SECURE = False  # Set to True in production
+CSRF_COOKIE_SECURE = False  # Set to True in production
+CSRF_COOKIE_HTTPONLY = False  # Set to True in production
+CSRF_USE_SESSIONS = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
 
 
 # Application definition
@@ -89,7 +107,9 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.debug",
                 "django.template.context_processors.request",
+                "django.template.context_processors.csrf",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],

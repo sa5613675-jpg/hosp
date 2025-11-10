@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from decimal import Decimal
 
 class User(AbstractUser):
     """Custom User model with role-based access"""
@@ -60,13 +61,20 @@ class User(AbstractUser):
 # PC (Persistent Commission) System Models
 
 class PCMember(models.Model):
-    """PC (Persistent Commission) Member - Commission tracking system"""
+    """PC (Prescribing Consultant) member who refers patients"""
     
     MEMBER_TYPE_CHOICES = [
         ('GENERAL', 'General Member'),
         ('LIFETIME', 'Lifetime Member'),
-        ('INVESTOR', 'Investor Member'),
+        ('PREMIUM', 'Premium Member'),
     ]
+    
+    # Default commission rates by member type
+    COMMISSION_RATES = {
+        'GENERAL': {'normal': 15, 'digital': 20},
+        'LIFETIME': {'normal': 20, 'digital': 25},
+        'PREMIUM': {'normal': 25, 'digital': 30},
+    }
     
     # Member information
     pc_code = models.CharField(max_length=20, unique=True, editable=False)
@@ -76,11 +84,42 @@ class PCMember(models.Model):
     email = models.EmailField(blank=True)
     address = models.TextField(blank=True)
     
-    # Commission settings
+    # Commission rates for different services
+    # Commission rates
     commission_percentage = models.DecimalField(
-        max_digits=5, 
+        max_digits=5,
         decimal_places=2,
-        help_text="Commission percentage (e.g., 30 for 30%)"
+        default=15.00,
+        help_text="Default commission percentage"
+    )
+    
+    normal_test_commission = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=15.00,
+        help_text="Commission percentage for normal tests"
+    )
+    
+    digital_test_commission = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=20.00,
+        help_text="Commission percentage for digital tests"
+    )
+    
+    # Test-specific commission rates
+    normal_test_commission = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=15.00,
+        help_text="Commission percentage for normal tests"
+    )
+    
+    digital_test_commission = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=20.00,
+        help_text="Commission percentage for digital tests"
     )
     
     # Totals
@@ -263,6 +302,14 @@ class PCTransaction(models.Model):
                 new_number = 1
             
             self.transaction_number = f'PC{date_str}{new_number:04d}'
+        
+        # Calculate commission based on test type
+        if hasattr(self, 'lab_order') and self.lab_order:
+            test_type = self.lab_order.test.test_type
+            if test_type == 'DIGITAL':
+                self.commission_percentage = self.pc_member.digital_test_commission
+            else:  # NORMAL
+                self.commission_percentage = self.pc_member.normal_test_commission
         
         # Calculate commission and admin amounts
         self.commission_amount = (self.total_amount * self.commission_percentage) / 100
