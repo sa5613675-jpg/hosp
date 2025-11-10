@@ -70,7 +70,11 @@ def lab_order_list(request):
 
 @login_required
 def lab_order_create(request):
-    """Create lab order"""
+    """Create lab order - Reception and Admin can access"""
+    if not (request.user.is_receptionist or request.user.is_admin or request.user.is_lab_staff):
+        messages.error(request, 'Access denied. Reception, Lab Staff, or Admin access required.')
+        return redirect('accounts:dashboard')
+    
     if request.method == 'POST':
         # TODO: Implement form handling
         messages.success(request, 'Lab order created successfully!')
@@ -288,7 +292,7 @@ def quality_control_view(request):
 @login_required
 def lab_test_manage(request):
     """Manage lab tests (Admin only)"""
-    if request.user.role != 'ADMIN':
+    if not request.user.is_admin:
         messages.error(request, 'Access denied. Admin only.')
         return redirect('accounts:dashboard')
     
@@ -308,7 +312,7 @@ def lab_test_manage(request):
 @login_required
 def lab_test_create(request):
     """Create new lab test (Admin only)"""
-    if request.user.role != 'ADMIN':
+    if not request.user.is_admin:
         messages.error(request, 'Access denied. Admin only.')
         return redirect('accounts:dashboard')
     
@@ -327,7 +331,7 @@ def lab_test_create(request):
 @login_required
 def lab_test_edit(request, pk):
     """Edit lab test (Admin only)"""
-    if request.user.role != 'ADMIN':
+    if not request.user.is_admin:
         messages.error(request, 'Access denied. Admin only.')
         return redirect('accounts:dashboard')
     
@@ -352,7 +356,7 @@ def lab_test_edit(request, pk):
 @login_required
 def lab_test_delete(request, pk):
     """Delete/deactivate lab test (Admin only)"""
-    if request.user.role != 'ADMIN':
+    if not request.user.is_admin:
         messages.error(request, 'Access denied. Admin only.')
         return redirect('accounts:dashboard')
     
