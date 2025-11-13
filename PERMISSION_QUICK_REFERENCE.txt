@@ -1,0 +1,64 @@
+╔════════════════════════════════════════════════════════════════╗
+║          PERMISSION FIXES - QUICK REFERENCE                    ║
+╚════════════════════════════════════════════════════════════════╝
+
+✅ FIXED ISSUES:
+├─ Reception can now ADD LAB ORDERS
+├─ Reception can CREATE BILLING VOUCHERS/PRINT BILLS
+├─ Admin can MANAGE LAB TESTS (Add/Edit/Delete)
+└─ Admin can MANAGE PC MEMBERS (Add/Remove)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👨‍💼 ADMIN ACCESS:
+✓ Lab Tests Management    → /lab/tests/manage/
+✓ PC Commission Dashboard → /accounts/pc-dashboard/
+✓ Add/Edit/Remove PC Members
+✓ Edit Commission Rates
+✓ Finance Dashboard
+✓ All Reports
+
+👨‍💻 RECEPTION ACCESS:  
+✓ Lab Orders List         → /lab/orders/
+✓ Create Lab Order        → /lab/orders/create/
+✓ Create Billing Voucher  → Auto after lab order
+✓ Print Bills/Receipts
+✓ Patient Management
+✓ Appointment Booking
+
+❌ RECEPTION CANNOT:
+✗ Manage Lab Tests
+✗ Manage PC Members
+✗ View Finance Dashboard
+✗ Edit Commission Rates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 NAVIGATION UPDATES:
+Reception sidebar now shows:
+  - Dashboard
+  - Patients  
+  - Appointments
+  - Lab Orders  ← NEW!
+  - Patient Queue
+
+Admin sidebar shows:
+  - Dashboard
+  - Finance
+  - PC Commission  ← For PC Members
+  - Doctors
+  - Lab Tests      ← For Test Management
+  - Reports
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 TO DEPLOY ON VPS:
+cd /var/www/hosp
+source venv/bin/activate
+git pull origin main
+python3 manage.py collectstatic --noinput
+sudo systemctl restart hosp
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Code pushed to GitHub: Commit 5647aa8
