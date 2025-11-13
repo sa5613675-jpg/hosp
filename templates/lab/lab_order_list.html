@@ -5,49 +5,99 @@
 
 {% block extra_css %}
 <style>
-    .order-card {
+    .order-table {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .order-row {
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+    }
+    
+    .order-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
         border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 15px;
-        transition: all 0.3s;
-        border-left: 5px solid #dee2e6;
+        font-size: 0.85rem;
+        font-weight: 500;
     }
     
-    .order-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    }
+    .status-completed { background-color: #d1e7dd; color: #0f5132; }
+    .status-in-progress { background-color: #fff3cd; color: #664d03; }
+    .status-ordered { background-color: #cff4fc; color: #055160; }
     
-    .order-card.ordered {
-        border-left-color: #0dcaf0;
-        background-color: #cff4fc;
+    .print-btn {
+        padding: 6px 12px;
+        font-size: 0.875rem;
     }
-    
-    .order-card.sample_collected {
-        border-left-color: #0d6efd;
-        background-color: #cfe2ff;
-    }
-    
-    .order-card.in_progress {
-        border-left-color: #ffc107;
-        background-color: #fff3cd;
-    }
-    
-    .order-card.completed {
-        border-left-color: #198754;
-        background-color: #d1e7dd;
-    }
-    
-    .order-card.cancelled {
-        border-left-color: #dc3545;
-        background-color: #f8d7da;
-    }
-    
-    .stat-box {
-        border-radius: 15px;
-        padding: 25px;
-        color: white;
-        margin-bottom: 20px;
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="bi bi-clipboard-pulse"></i> Lab Orders & Bills</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'lab:lab_dashboard' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Lab Orders</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'lab:order_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> New Lab Order
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="searchBox" 
+                   placeholder="Search by order #, patient name, or phone..." 
+                   onkeyup="searchOrders()">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="statusFilter" onchange="filterStatus()">
+                <option value="">All Status</option>
+                <option value="ORDERED">Ordered</option>
+                <option value="SAMPLE_COLLECTED">Sample Collected</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="COMPLETED">Completed</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" class="form-control" id="dateFilter" onchange="filterDate()">
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="order-table">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Patient Name</th>
+                    <th>Phone</th>
+                    <th>Tests</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
         cursor: pointer;
         transition: transform 0.3s;
     }

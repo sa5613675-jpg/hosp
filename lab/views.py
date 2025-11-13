@@ -63,9 +63,26 @@ class LabOrderListView(LoginRequiredMixin, ListView):
 
 @login_required
 def lab_order_list(request):
-    """List lab orders - function-based view"""
-    orders = LabOrder.objects.all().select_related('patient').order_by('-ordered_at')
-    return render(request, 'lab/lab_order_list.html', {'orders': orders})
+    """List lab orders - Simple view with history and print voucher option"""
+    from django.utils import timezone
+    
+    orders = LabOrder.objects.all().select_related('patient', 'ordered_by').prefetch_related('tests').order_by('-ordered_at')
+    
+    # Filter by date if provided
+    date_filter = request.GET.get('date')
+    if date_filter:
+        orders = orders.filter(ordered_at__date=date_filter)
+    
+    # Filter by status if provided
+    status_filter = request.GET.get('status')
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+    
+    context = {
+        'order_list': orders[:100],  # Limit to recent 100 orders
+        'today': timezone.now().date(),
+    }
+    return render(request, 'lab/lab_order_list_simple.html', context)
 
 
 @login_required
@@ -82,7 +99,7 @@ def lab_order_create(request):
     
     context = {
         'tests': LabTest.objects.filter(is_active=True).order_by('category', 'test_name'),
-        'patients': Patient.objects.filter(is_active=True).order_by('-created_at')[:50],
+        'patients': Patient.objects.filter(is_active=True).order_by('-registered_at')[:50],
         'today': timezone.now().date(),
     }
     return render(request, 'lab/lab_order_form.html', context)
@@ -91,6 +108,15 @@ def lab_order_create(request):
 @login_required
 def lab_order_detail(request, pk):
     """View lab order details"""
+    order = get_object_or_404(LabOrder, pk=pk)
+    return render(request, 'lab/lab_order_detail.html', {'order': order})
+
+
+@login_required
+def print_lab_voucher(request, pk):
+    """Print lab test bill voucher"""
+    order = get_object_or_404(LabOrder, pk=pk)
+    return render(request, 'lab/print_voucher.html', {'order': order})
     order = get_object_or_404(LabOrder, pk=pk)
     return render(request, 'lab/lab_order_detail.html', {'order': order})
 

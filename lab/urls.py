@@ -8,10 +8,11 @@ urlpatterns = [
     path('dashboard/', views.lab_dashboard, name='lab_dashboard'),
     
     # Lab Orders
-    path('orders/', views.LabOrderListView.as_view(), name='order_list'),
+    path('orders/', views.lab_order_list, name='order_list'),
     path('order/create/', views.lab_order_create, name='order_create'),
     path('order/<int:pk>/', views.lab_order_detail, name='order_detail'),
     path('order/<int:pk>/details/', views.lab_order_detail, name='order_details'),  # AJAX
+    path('order/<int:pk>/print-voucher/', views.print_lab_voucher, name='print_voucher'),
     path('order/<int:pk>/collect-sample/', views.collect_sample, name='collect_sample'),
     path('order/<int:pk>/start-testing/', views.start_testing, name='start_testing'),
     path('order/<int:pk>/cancel/', views.cancel_order, name='cancel_order'),
