@@ -20,11 +20,6 @@
             </a>
             {% endif %}
         {% endif %}
-        {% if appointment.status == 'waiting' %}
-        <a href="{% url 'appointments:appointment_edit' appointment.pk %}" class="btn btn-secondary me-2">
-            <i class="bi bi-pencil"></i> Edit
-        </a>
-        {% endif %}
         <a href="{% url 'appointments:appointment_list' %}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Back
         </a>

@@ -44,30 +44,10 @@
                         
                         <hr>
 
-                        <!-- PC Code Section -->
-                        <div class="row mb-3">
-                            <div class="col-md-8">
-                                <label class="form-label"><strong>PC Code / Referral Code (Optional)</strong></label>
-                                <input type="text" name="pc_code" id="pcCode" class="form-control" 
-                                       placeholder="Enter 5-digit PC code (e.g., 10001, 20001)" 
-                                       maxlength="20" style="text-transform: uppercase;">
-                                <small class="text-muted">Enter the unique PC code for commission tracking</small>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">&nbsp;</label>
-                                <button type="button" class="btn btn-info w-100" id="verifyPC">
-                                    <i class="bi bi-search"></i> Verify Code
-                                </button>
-                            </div>
+                        <!-- PC Code Section - DISABLED FOR DOCTOR APPOINTMENTS -->
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> <strong>Note:</strong> PC codes are only for lab tests, not doctor consultations.
                         </div>
-
-                        <div class="alert alert-success" id="pcInfo" style="display: none;">
-                            <h6><i class="bi bi-person-check"></i> PC Member Found!</h6>
-                            <strong>Name:</strong> <span id="pcName"></span><br>
-                            <strong>Code:</strong> <span id="pcCodeDisplay"></span><br>
-                            <strong>Commission:</strong> <span id="pcCommission">0</span>%<br>
-                            <hr class="my-2">
-                            <strong>Commission Amount:</strong> ৳<span id="commissionAmount">0</span><br>
                             <strong>Admin Revenue:</strong> ৳<span id="adminRevenue">0</span>
                         </div>
 

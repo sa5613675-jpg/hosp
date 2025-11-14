@@ -1859,38 +1859,14 @@ def reception_billing_appointment(request, appointment_id):
             original_amount = float(appointment.consultation_fee)
             final_amount = original_amount
             
-            # PC Code processing
+            # PC Code processing - ONLY FOR LAB TESTS, NOT DOCTOR CONSULTATIONS
             pc_member = None
             commission_amount = 0
             admin_amount = 0
             
             if pc_code:
-                try:
-                    from .models import PCMember, PCTransaction
-                    pc_member = PCMember.objects.get(pc_code=pc_code, is_active=True)
-                    
-                    commission_percentage = float(pc_member.commission_percentage)
-                    commission_amount = final_amount * (commission_percentage / 100)
-                    admin_amount = final_amount - commission_amount
-                    
-                    pc_transaction = PCTransaction.objects.create(
-                        pc_member=pc_member,
-                        patient=appointment.patient,
-                        appointment=appointment,
-                        total_amount=final_amount,
-                        commission_percentage=commission_percentage,
-                        commission_amount=commission_amount,
-                        admin_amount=admin_amount,
-                        recorded_by=request.user
-                    )
-                    
-                    pc_member.due_amount += commission_amount
-                    pc_member.total_referrals += 1
-                    pc_member.save()
-                    
-                    messages.success(request, f'✅ PC Code applied: {pc_code} | Commission: ৳{commission_amount:.2f}')
-                except PCMember.DoesNotExist:
-                    messages.warning(request, f'⚠️ Invalid PC Code: {pc_code}')
+                # PC codes are NOT allowed for doctor appointments - only for lab tests
+                messages.warning(request, f'⚠️ PC Code cannot be used for doctor consultations. PC codes are only for lab tests.')
             
             # NOTE: Doctor consultation fees are NOT recorded as admin income
             # They belong to the doctor and reception, not admin account
