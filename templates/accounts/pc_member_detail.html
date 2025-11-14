@@ -15,6 +15,9 @@
         <a href="{% url 'accounts:pc_transaction_create' %}?member={{ member.pk }}" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> Add Transaction
         </a>
+        <a href="{% url 'accounts:pc_member_delete' member.pc_code %}" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Delete
+        </a>
     </div>
 </div>
 

@@ -216,15 +216,8 @@ class QuickAppointmentForm(forms.Form):
             created_by=created_by
         )
         
-        # Record payment as income
-        Income.objects.create(
-            date=today,
-            source='CONSULTATION',
-            amount=consultation_fee,
-            payment_method=payment_method,
-            description=f'Consultation fee - Dr. {doctor.get_full_name()} - Patient: {patient.get_full_name()} (Serial #{appointment.serial_number})',
-            recorded_by=created_by
-        )
+        # NOTE: Doctor consultation fees are NOT recorded as admin income
+        # They belong to the doctor and reception, not admin account
         
         return appointment, patient
 

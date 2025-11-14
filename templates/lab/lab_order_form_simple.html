@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Lab Order{% endblock %}
+
+{% block extra_css %}
+<style>
+    .test-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .test-card:hover {
+        background-color: #f8f9fa;
+        border-color: #0d6efd;
+    }
+    
+    .test-card.selected {
+        background-color: #d1e7dd;
+        border-color: #198754;
+        border-width: 2px;
+    }
+    
+    .test-card input[type="checkbox"] {
+        transform: scale(1.2);
+        margin-right: 10px;
+    }
+    
+    .category-header {
+        background-color: #e7f3ff;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 15px;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    
+    .total-section {
+        position: sticky;
+        top: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .total-amount {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    
+    .payment-section {
+        background: #fff;
+        color: #333;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="bi bi-clipboard-plus"></i> Create Lab Order & Payment</h2>
+                    <p class="text-muted">Select patient, tests, and collect payment</p>
+                </div>
+                <a href="{% url 'lab:order_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="labOrderForm">
+        {% csrf_token %}
+        <div class="row">
+            <!-- Left: Patient & Tests Selection -->
+            <div class="col-md-8">
+                <!-- Patient Selection -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-person"></i> 1. Select Patient</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <select name="patient_id" id="patientSelect" class="form-select" required onchange="updatePatientInfo()">
+                                    <option value="">-- Select Patient --</option>
+                                    {% for patient in patients %}
+                                    <option value="{{ patient.id }}" 
+                                            data-name="{{ patient.first_name }} {{ patient.last_name }}"
+                                            data-id="{{ patient.patient_id }}"
+                                            data-phone="{{ patient.phone }}">
+                                        {{ patient.first_name }} {{ patient.last_name }} - ID: {{ patient.patient_id }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{% url 'patients:patient_register' %}" class="btn btn-success w-100" target="_blank">
+                                    <i class="bi bi-plus-circle"></i> New Patient
+                                </a>
+                            </div>
+                        </div>
+                        <div id="patientInfo" class="mt-3" style="display: none;">
+                            <div class="alert alert-info">
+                                <strong>Patient:</strong> <span id="patientName"></span><br>
+                                <strong>ID:</strong> <span id="patientId"></span><br>
+                                <strong>Phone:</strong> <span id="patientPhone"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tests Selection -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-check2-square"></i> 2. Select Lab Tests</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                        {% regroup tests by category as tests_by_category %}
+                        {% for category in tests_by_category %}
+                        <div class="category-header">
+                            {{ category.grouper }}
+                        </div>
+                        {% for test in category.list %}
+                        <div class="test-card" onclick="toggleTest(this, {{ test.id }}, {{ test.price }})">
+                            <label class="d-flex align-items-center mb-0 w-100">
+                                <input type="checkbox" name="tests" value="{{ test.id }}" 
+                                       class="test-checkbox" onclick="event.stopPropagation();">
+                                <div class="flex-grow-1">
+                                    <strong>{{ test.test_name }}</strong>
+                                    {% if test.test_type == 'DIGITAL' %}
+                                    <span class="badge bg-info ms-2">Digital</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-primary fw-bold">৳{{ test.price }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Payment & Summary -->
+            <div class="col-md-4">
+                <div class="total-section">
+                    <h4 class="text-center"><i class="bi bi-receipt"></i> Payment Summary</h4>
+                    <hr style="border-color: rgba(255,255,255,0.3);">
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Selected Tests:</span>
+                        <strong><span id="testCount">0</span></strong>
+                    </div>
+                    
+                    <div class="total-amount text-center">
+                        ৳<span id="totalAmount">0.00</span>
+                    </div>
+                    
+                    <div class="payment-section">
+                        <label class="form-label fw-bold">Payment Amount *</label>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">৳</span>
+                            <input type="number" name="paid_amount" id="paidAmount" 
+                                   class="form-control form-control-lg" 
+                                   step="0.01" min="0" required 
+                                   placeholder="0.00" onchange="checkPayment()">
+                        </div>
+                        
+                        <label class="form-label">PC Code (Optional)</label>
+                        <input type="text" name="pc_code" class="form-control mb-3" 
+                               placeholder="Enter PC code if referred">
+                        
+                        <div id="paymentStatus" class="alert" style="display: none;"></div>
+                        
+                        <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100" disabled>
+                            <i class="bi bi-check-circle"></i> Complete Payment & Print Voucher
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+let selectedTests = new Set();
+let totalAmount = 0;
+
+function toggleTest(card, testId, price) {
+    const checkbox = card.querySelector('.test-checkbox');
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+        card.classList.add('selected');
+        selectedTests.add({id: testId, price: price});
+    } else {
+        card.classList.remove('selected');
+        selectedTests.delete(Array.from(selectedTests).find(t => t.id === testId));
+    }
+    
+    updateTotal();
+}
+
+function updateTotal() {
+    totalAmount = Array.from(selectedTests).reduce((sum, test) => sum + test.price, 0);
+    document.getElementById('testCount').textContent = selectedTests.size;
+    document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+    checkPayment();
+}
+
+function updatePatientInfo() {
+    const select = document.getElementById('patientSelect');
+    const option = select.options[select.selectedIndex];
+    
+    if (option.value) {
+        document.getElementById('patientName').textContent = option.dataset.name;
+        document.getElementById('patientId').textContent = option.dataset.id;
+        document.getElementById('patientPhone').textContent = option.dataset.phone || 'N/A';
+        document.getElementById('patientInfo').style.display = 'block';
+    } else {
+        document.getElementById('patientInfo').style.display = 'none';
+    }
+}
+
+function checkPayment() {
+    const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+    const patientSelected = document.getElementById('patientSelect').value;
+    const statusDiv = document.getElementById('paymentStatus');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (totalAmount === 0 || !patientSelected) {
+        statusDiv.style.display = 'none';
+        submitBtn.disabled = true;
+        return;
+    }
+    
+    if (paidAmount >= totalAmount) {
+        statusDiv.className = 'alert alert-success';
+        statusDiv.innerHTML = '<i class="bi bi-check-circle"></i> Payment received: ৳' + paidAmount.toFixed(2);
+        statusDiv.style.display = 'block';
+        submitBtn.disabled = false;
+    } else {
+        statusDiv.className = 'alert alert-danger';
+        statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Insufficient payment. Need: ৳' + totalAmount.toFixed(2);
+        statusDiv.style.display = 'block';
+        submitBtn.disabled = true;
+    }
+}
+
+// Auto-fill paid amount when total changes
+document.getElementById('totalAmount').addEventListener('DOMSubtreeModified', function() {
+    if (totalAmount > 0 && !document.getElementById('paidAmount').value) {
+        document.getElementById('paidAmount').value = totalAmount.toFixed(2);
+        checkPayment();
+    }
+});
+</script>
+{% endblock %}

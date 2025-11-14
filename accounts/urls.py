@@ -68,6 +68,7 @@ urlpatterns = [
     path('pc-members/create/', pc_views.pc_member_create, name='pc_member_create'),
     path('pc-member/<str:pc_code>/', pc_views.pc_member_detail, name='pc_member_detail'),
     path('pc-member/<str:pc_code>/mark-paid/', pc_views.pc_mark_paid, name='pc_mark_paid'),
+    path('pc-member/<str:pc_code>/delete/', pc_views.pc_member_delete, name='pc_member_delete'),
     path('pc-transaction/create/', pc_views.pc_transaction_create, name='pc_transaction_create'),
     
     # AJAX APIs

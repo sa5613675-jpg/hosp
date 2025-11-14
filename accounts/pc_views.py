@@ -392,3 +392,48 @@ def pc_mark_paid(request, pc_code):
     
     # Redirect back to the member list of the same type
     return redirect('accounts:pc_member_list', member_type=member.member_type)
+
+
+@login_required
+def pc_member_delete(request, pc_code):
+    """Delete PC member (Admin only)"""
+    if not request.user.is_admin:
+        messages.error(request, "Access denied. Admin only.")
+        return redirect('accounts:dashboard')
+    
+    member = get_object_or_404(PCMember, pc_code=pc_code)
+    member_type = member.member_type
+    member_name = member.name
+    
+    # Check if member has transactions
+    transaction_count = member.transactions.count()
+    
+    if request.method == 'POST':
+        # Confirm deletion
+        if transaction_count > 0:
+            # Has transactions - just deactivate instead of delete
+            member.is_active = False
+            member.save()
+            messages.warning(
+                request,
+                f'PC Member "{member_name}" ({pc_code}) has {transaction_count} transactions. '
+                f'Member has been deactivated instead of deleted for record keeping.'
+            )
+        else:
+            # No transactions - safe to delete
+            member.delete()
+            messages.success(
+                request,
+                f'PC Member "{member_name}" ({pc_code}) has been permanently deleted.'
+            )
+        
+        return redirect('accounts:pc_member_list', member_type=member_type)
+    
+    # Show confirmation page
+    context = {
+        'member': member,
+        'transaction_count': transaction_count,
+        'has_transactions': transaction_count > 0,
+    }
+    
+    return render(request, 'accounts/pc_member_delete_confirm.html', context)

@@ -150,6 +150,11 @@
                                    title="Add Transaction">
                                     <i class="bi bi-plus-circle"></i>
                                 </a>
+                                <a href="{% url 'accounts:pc_member_delete' member.pc_code %}" 
+                                   class="btn btn-outline-danger" 
+                                   title="Delete Member">
+                                    <i class="bi bi-trash"></i>
+                                </a>
                             </div>
                             {% if member.due_amount > 0 %}
                             <button type="button"

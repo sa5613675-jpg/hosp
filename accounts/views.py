@@ -73,14 +73,18 @@ def manage_pc_commission(request, pc_code):
     pc_member = get_object_or_404(PCMember, pc_code=pc_code)
     
     if request.method == 'POST':
-        # Update commission rates
-        pc_member.commission_percentage = request.POST.get('commission_percentage', 15.00)
-        pc_member.normal_test_commission = request.POST.get('normal_test_commission', 15.00)
-        pc_member.digital_test_commission = request.POST.get('digital_test_commission', 20.00)
-        pc_member.save()
-        
-        messages.success(request, f'Commission rates updated for {pc_member.name}')
-        return redirect('accounts:pc_member_detail', pc_code=pc_code)
+        from decimal import Decimal
+        # Update commission rates - properly convert to Decimal
+        try:
+            pc_member.commission_percentage = Decimal(request.POST.get('commission_percentage', '15.00'))
+            pc_member.normal_test_commission = Decimal(request.POST.get('normal_test_commission', '15.00'))
+            pc_member.digital_test_commission = Decimal(request.POST.get('digital_test_commission', '20.00'))
+            pc_member.save()
+            
+            messages.success(request, f'✅ Commission rates updated for {pc_member.name}')
+            return redirect('accounts:pc_member_detail', pc_code=pc_code)
+        except (ValueError, TypeError) as e:
+            messages.error(request, f'❌ Invalid commission rate value. Please enter valid numbers.')
     
     context = {
         'pc_member': pc_member,
@@ -96,18 +100,22 @@ def update_default_rates(request, member_type):
         return redirect('accounts:dashboard')
     
     if request.method == 'POST':
-        normal_rate = request.POST.get('normal_test_commission')
-        digital_rate = request.POST.get('digital_test_commission')
-        other_rate = request.POST.get('commission_percentage')
-        
-        # Update all members of this type
-        updated_count = PCMember.objects.filter(member_type=member_type).update(
-            normal_test_commission=normal_rate,
-            digital_test_commission=digital_rate,
-            commission_percentage=other_rate
-        )
-        
-        messages.success(request, f'Updated commission rates for {updated_count} {member_type} members')
+        from decimal import Decimal
+        try:
+            normal_rate = Decimal(request.POST.get('normal_test_commission', '15.00'))
+            digital_rate = Decimal(request.POST.get('digital_test_commission', '20.00'))
+            other_rate = Decimal(request.POST.get('commission_percentage', '15.00'))
+            
+            # Update all members of this type
+            updated_count = PCMember.objects.filter(member_type=member_type).update(
+                normal_test_commission=normal_rate,
+                digital_test_commission=digital_rate,
+                commission_percentage=other_rate
+            )
+            
+            messages.success(request, f'✅ Updated commission rates for {updated_count} {member_type} members')
+        except (ValueError, TypeError) as e:
+            messages.error(request, f'❌ Invalid commission rate value. Please enter valid numbers.')
     
     return redirect('accounts:pc_dashboard')
 
@@ -1786,15 +1794,21 @@ def reception_billing_lab(request, order_id):
                 except PCMember.DoesNotExist:
                     messages.warning(request, f'⚠️ Invalid PC Code: {pc_code}')
             
-            # Record income
+            # Record income - only admin's share if PC code was used
             from finance.models import Income
             from django.utils import timezone
             
+            # If PC code was used, only record admin's portion
+            income_amount = admin_amount if pc_code and commission_amount > 0 else final_amount
+            income_desc = f'Lab Order {lab_order.order_number} - {lab_order.patient.get_full_name()}'
+            if pc_code and commission_amount > 0:
+                income_desc += f' (Admin share after PC commission: ৳{commission_amount:.2f} to {pc_code})'
+            
             Income.objects.create(
                 source='LAB_TEST',
-                amount=final_amount,
+                amount=income_amount,
                 date=timezone.now().date(),
-                description=f'Lab Order {lab_order.order_number} - {lab_order.patient.get_full_name()}',
+                description=income_desc,
                 recorded_by=request.user
             )
             
@@ -1870,15 +1884,8 @@ def reception_billing_appointment(request, appointment_id):
                 except PCMember.DoesNotExist:
                     messages.warning(request, f'⚠️ Invalid PC Code: {pc_code}')
             
-            # Record income
-            from finance.models import Income
-            income = Income.objects.create(
-                source='CONSULTATION',
-                amount=final_amount,
-                description=f'Appointment {appointment.appointment_number} - Dr. {appointment.doctor.get_full_name()}',
-                recorded_by=request.user,
-                patient=appointment.patient
-            )
+            # NOTE: Doctor consultation fees are NOT recorded as admin income
+            # They belong to the doctor and reception, not admin account
             
             # Mark as paid
             appointment.payment_status = 'paid'

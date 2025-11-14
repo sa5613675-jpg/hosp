@@ -7,7 +7,7 @@ class PCCommissionRate(models.Model):
     MEMBER_TYPE_CHOICES = [
         ('GENERAL', 'General Member'),
         ('LIFETIME', 'Lifetime Member'),
-        ('INVESTOR', 'Investor Member'),
+        ('PREMIUM', 'Premium Member'),
     ]
     
     TEST_TYPE_CHOICES = [

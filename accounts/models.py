@@ -166,8 +166,8 @@ class PCMember(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.pc_code:
-            # Generate 5-digit PC code based on member type
-            # Format: [Type Digit][4-digit Sequential Number]
+            # Generate 6-digit PC code based on member type
+            # Format: [Type Digit][5-digit Sequential Number]
             if self.member_type == 'GENERAL':
                 prefix = '1'
                 last_member = PCMember.objects.filter(
@@ -178,7 +178,7 @@ class PCMember(models.Model):
                 last_member = PCMember.objects.filter(
                     pc_code__startswith='2'
                 ).order_by('pc_code').last()
-            elif self.member_type == 'INVESTOR':
+            elif self.member_type == 'PREMIUM':
                 prefix = '3'
                 last_member = PCMember.objects.filter(
                     pc_code__startswith='3'
@@ -193,8 +193,8 @@ class PCMember(models.Model):
             else:
                 new_number = 1
             
-            # 5-digit code: 1 digit prefix + 4 digit number (e.g., 10001, 20001, 30001)
-            self.pc_code = f"{prefix}{new_number:04d}"
+            # 6-digit code: 1 digit prefix + 5 digit number (e.g., 100001, 200001, 300001)
+            self.pc_code = f"{prefix}{new_number:05d}"
         
         super().save(*args, **kwargs)
     
@@ -205,7 +205,7 @@ class PCMember(models.Model):
             return 'white'
         elif self.member_type == 'LIFETIME':
             return 'blue'
-        elif self.member_type == 'INVESTOR':
+        elif self.member_type == 'PREMIUM':
             return 'green'
         return 'gray'
 

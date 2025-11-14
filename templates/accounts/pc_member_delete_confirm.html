@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete PC Member - {{ member.pc_code }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.delete-warning {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+.delete-danger {
+    background: #f8d7da;
+    border: 2px solid #dc3545;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+.member-info-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+.info-label { font-weight: 600; color: #666; }
+.info-value { color: #333; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-exclamation-triangle text-danger"></i> Delete PC Member</h2>
+                <a href="{% url 'accounts:pc_member_list' member.member_type %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+
+            {% if has_transactions %}
+            <div class="delete-warning">
+                <h5><i class="bi bi-exclamation-triangle text-warning"></i> Warning: Member Has Transaction History</h5>
+                <p class="mb-0">
+                    This PC member has <strong>{{ transaction_count }} transaction(s)</strong>. 
+                    To preserve financial records, the member will be <strong>deactivated</strong> instead of permanently deleted.
+                    Deactivated members cannot receive new commissions but their history remains intact.
+                </p>
+            </div>
+            {% else %}
+            <div class="delete-danger">
+                <h5><i class="bi bi-trash text-danger"></i> Permanent Deletion</h5>
+                <p class="mb-0">
+                    This PC member has no transaction history and will be <strong>permanently deleted</strong>.
+                    This action cannot be undone.
+                </p>
+            </div>
+            {% endif %}
+
+            <div class="member-info-card">
+                <h5 class="mb-3"><i class="bi bi-person-badge"></i> Member Information</h5>
+                <div class="info-row">
+                    <span class="info-label">PC Code:</span>
+                    <span class="info-value"><strong>{{ member.pc_code }}</strong></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">{{ member.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Member Type:</span>
+                    <span class="info-value">
+                        {% if member.member_type == 'GENERAL' %}
+                            <span class="badge bg-secondary">General (30%)</span>
+                        {% elif member.member_type == 'LIFETIME' %}
+                            <span class="badge bg-primary">Lifetime (35%)</span>
+                        {% elif member.member_type == 'PREMIUM' %}
+                            <span class="badge bg-success">Premium (50%)</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    <span class="info-value">{{ member.phone }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total Referrals:</span>
+                    <span class="info-value">{{ member.total_referrals }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total Commission Earned:</span>
+                    <span class="info-value">৳{{ member.total_commission_earned|floatformat:2 }}</span>
+                </div>
+                <div class="info-row" style="border-bottom: none;">
+                    <span class="info-label">Due Amount:</span>
+                    <span class="info-value text-danger"><strong>৳{{ member.due_amount|floatformat:2 }}</strong></span>
+                </div>
+            </div>
+
+            {% if member.due_amount > 0 %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-circle"></i> 
+                <strong>Unpaid Commission:</strong> This member has ৳{{ member.due_amount|floatformat:2 }} in unpaid commissions. 
+                Please settle this before deletion/deactivation.
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">
+                        <i class="bi bi-question-circle"></i> Confirm Action
+                    </h5>
+                    <p class="card-text">
+                        {% if has_transactions %}
+                            Are you sure you want to <strong>deactivate</strong> PC member <strong>{{ member.name }}</strong> ({{ member.pc_code }})?
+                        {% else %}
+                            Are you sure you want to <strong>permanently delete</strong> PC member <strong>{{ member.name }}</strong> ({{ member.pc_code }})?
+                        {% endif %}
+                    </p>
+                    
+                    <form method="post" onsubmit="return confirm('Are you absolutely sure? This action cannot be undone.');">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            {% if has_transactions %}
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-toggle-off"></i> Deactivate Member
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash"></i> Delete Permanently
+                                </button>
+                            {% endif %}
+                            <a href="{% url 'accounts:pc_member_list' member.member_type %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i> 
+                    Transaction Count: {{ transaction_count }} | 
+                    Created: {{ member.created_at|date:"d M, Y" }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

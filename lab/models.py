@@ -106,6 +106,15 @@ class LabOrder(models.Model):
     clinical_notes = models.TextField(blank=True, help_text="Clinical information from doctor")
     priority = models.BooleanField(default=False, help_text="Mark as urgent")
     
+    # PC Code (for commission)
+    pc_code = models.ForeignKey(
+        'accounts.PCMember',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lab_orders'
+    )
+    
     # Billing
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_paid = models.BooleanField(default=False)

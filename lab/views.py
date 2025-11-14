@@ -87,22 +87,91 @@ def lab_order_list(request):
 
 @login_required
 def lab_order_create(request):
-    """Create lab order - Reception and Admin can access"""
+    """Create lab order with payment - Reception and Admin can access"""
     if not (request.user.is_receptionist or request.user.is_admin or request.user.is_lab_staff):
         messages.error(request, 'Access denied. Reception, Lab Staff, or Admin access required.')
         return redirect('accounts:dashboard')
     
     if request.method == 'POST':
-        # TODO: Implement form handling
-        messages.success(request, 'Lab order created successfully!')
-        return redirect('lab:order_list')
+        try:
+            # Get form data
+            patient_id = request.POST.get('patient_id')
+            test_ids = request.POST.getlist('tests')
+            paid_amount = request.POST.get('paid_amount', 0)
+            pc_code = request.POST.get('pc_code', '').strip()
+            
+            # Validate
+            if not patient_id or not test_ids:
+                messages.error(request, 'Please select patient and at least one test')
+                return redirect('lab:order_create')
+            
+            patient = Patient.objects.get(id=patient_id)
+            tests = LabTest.objects.filter(id__in=test_ids)
+            
+            # Calculate total
+            total_amount = sum(test.price for test in tests)
+            
+            # Check payment
+            paid_amount = float(paid_amount) if paid_amount else 0
+            if paid_amount < total_amount:
+                messages.error(request, f'Payment required: ৳{total_amount}. Received: ৳{paid_amount}')
+                return redirect('lab:order_create')
+            
+            # Create lab order
+            lab_order = LabOrder.objects.create(
+                patient=patient,
+                ordered_by=request.user,
+                total_amount=total_amount,
+                is_paid=True,
+                status='COMPLETED'  # Since paid, mark as completed
+            )
+            lab_order.tests.set(tests)
+            
+            # Handle PC commission if PC code provided
+            if pc_code:
+                try:
+                    from accounts.models import PCMember, PCTransaction
+                    pc_member = PCMember.objects.get(pc_code=pc_code, is_active=True)
+                    
+                    # Calculate commission based on test types
+                    commission_amount = 0
+                    for test in tests:
+                        if test.test_type == 'NORMAL':
+                            commission_amount += (test.price * pc_member.normal_test_commission / 100)
+                        else:  # DIGITAL
+                            commission_amount += (test.price * pc_member.digital_test_commission / 100)
+                    
+                    admin_amount = total_amount - commission_amount
+                    
+                    # Create PC transaction
+                    PCTransaction.objects.create(
+                        pc_member=pc_member,
+                        transaction_type='LAB_TEST',
+                        amount=total_amount,
+                        commission_amount=commission_amount,
+                        admin_amount=admin_amount,
+                        description=f'Lab Order {lab_order.order_number}',
+                        lab_order=lab_order
+                    )
+                    lab_order.pc_code = pc_member
+                    lab_order.save()
+                except:
+                    pass  # If PC code invalid, continue without commission
+            
+            messages.success(request, f'Lab order created successfully! Order #: {lab_order.order_number}')
+            # Redirect to print voucher
+            return redirect('lab:print_voucher', pk=lab_order.id)
+            
+        except Exception as e:
+            messages.error(request, f'Error creating lab order: {str(e)}')
+            return redirect('lab:order_create')
     
     context = {
         'tests': LabTest.objects.filter(is_active=True).order_by('category', 'test_name'),
-        'patients': Patient.objects.filter(is_active=True).order_by('-registered_at')[:50],
+        'patients': Patient.objects.filter(is_active=True).order_by('-registered_at')[:100],
         'today': timezone.now().date(),
     }
-    return render(request, 'lab/lab_order_form.html', context)
+    return render(request, 'lab/lab_order_form_simple.html', context)
 
 
 @login_required
