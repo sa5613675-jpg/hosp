@@ -620,6 +620,7 @@ def online_booking(request):
                 'consultation_fee': str(consultation_fee),
                 'appointment_number': appointment.appointment_number,
             }
+            request.session.modified = True  # Force session save
             
             return redirect('appointments:booking_success')
             
@@ -642,11 +643,11 @@ def booking_success(request):
     booking_details = request.session.get('booking_success')
     
     if not booking_details:
-        messages.warning(request, 'No booking information found')
+        messages.warning(request, 'No booking information found. Please book again.')
         return redirect('appointments:online_booking')
     
-    # Clear the session data after retrieving
-    del request.session['booking_success']
+    # Don't delete session data immediately - keep it for page refresh
+    # It will be cleared when user books again or session expires
     
     return render(request, 'appointments/booking_success.html', {
         'booking': booking_details
