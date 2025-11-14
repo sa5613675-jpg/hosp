@@ -526,3 +526,101 @@ def reception_prescriptions_list(request):
     
     return render(request, 'appointments/reception_prescriptions_list.html', context)
 
+
+def online_booking(request):
+    """Public online appointment booking (no login required)"""
+    doctors = User.objects.filter(role='DOCTOR', is_active=True)
+    
+    if request.method == 'POST':
+        # Get form data
+        patient_name = request.POST.get('patient_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        age = request.POST.get('age', '').strip()
+        gender = request.POST.get('gender', '').strip()
+        doctor_id = request.POST.get('doctor')
+        reason = request.POST.get('reason', '').strip()
+        
+        # Validation
+        if not all([patient_name, phone, age, gender, doctor_id]):
+            messages.error(request, 'দয়া করে সকল তথ্য পূরণ করুন / Please fill all required fields')
+            return redirect('appointments:online_booking')
+        
+        try:
+            # Get doctor
+            doctor = User.objects.get(id=doctor_id, role='DOCTOR', is_active=True)
+            
+            # Split name
+            name_parts = patient_name.split(maxsplit=1)
+            first_name = name_parts[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ''
+            
+            # Calculate birth year from age
+            today = timezone.now().date()
+            year_of_birth = today.year - int(age)
+            date_of_birth = timezone.datetime(year_of_birth, 1, 1).date()
+            
+            # Get or create patient
+            patient, created = Patient.objects.get_or_create(
+                phone=phone,
+                defaults={
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'date_of_birth': date_of_birth,
+                    'gender': gender,
+                    'address': 'Online Booking',
+                }
+            )
+            
+            if not created:
+                patient.first_name = first_name
+                patient.last_name = last_name
+                patient.date_of_birth = date_of_birth
+                patient.gender = gender
+                patient.save()
+            
+            # Get next serial number
+            last_serial = Appointment.objects.filter(
+                doctor=doctor,
+                appointment_date=today
+            ).aggregate(Max('serial_number'))['serial_number__max']
+            
+            next_serial = (last_serial or 0) + 1
+            
+            # Create online appointment
+            appointment = Appointment.objects.create(
+                patient=patient,
+                doctor=doctor,
+                serial_number=next_serial,
+                appointment_date=today,
+                appointment_type='online',
+                is_online_booking=True,
+                online_payment_status='pending',
+                payment_status='unpaid',
+                status='waiting',
+                reason=reason,
+                consultation_fee=doctor.consultation_fee if hasattr(doctor, 'consultation_fee') else 500
+            )
+            
+            messages.success(
+                request,
+                f'✅ অনলাইন সিরিয়াল বুক হয়েছে! / Online Appointment Booked!<br>'
+                f'সিরিয়াল নম্বর / Serial: {next_serial}<br>'
+                f'ডাক্তার / Doctor: {doctor.get_full_name()}<br>'
+                f'ফোন / Phone: {phone}<br><br>'
+                f'<strong>দয়া করে রিসেপশনে গিয়ে টাকা পরিশোধ করুন</strong><br>'
+                f'<strong>Please visit reception to make payment</strong>'
+            )
+            
+            return redirect('appointments:online_booking')
+            
+        except User.DoesNotExist:
+            messages.error(request, 'Invalid doctor selection')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    context = {
+        'doctors': doctors,
+    }
+    
+    return render(request, 'appointments/online_booking.html', context)
+

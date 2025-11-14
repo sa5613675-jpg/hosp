@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Appointment Booking - Universal Health Services</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .booking-card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+        }
+        .form-section {
+            padding: 30px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            padding: 12px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-book {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 100%;
+            color: white;
+            transition: transform 0.2s;
+        }
+        .btn-book:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .doctor-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .doctor-card:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .doctor-card.selected {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="booking-card">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="bi bi-calendar-check"></i> অনলাইন সিরিয়াল বুকিং</h1>
+                <h1>Online Appointment Booking</h1>
+                <p>Universal Health Services & Diagnostic Center</p>
+                <p>Phone: 01332-856002</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="p-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message|safe }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Form Section -->
+            <div class="form-section">
+                <div class="info-box">
+                    <h6 class="mb-2"><i class="bi bi-info-circle"></i> <strong>গুরুত্বপূর্ণ তথ্য / Important Information</strong></h6>
+                    <ul class="mb-0 small">
+                        <li><strong>অনলাইন সিরিয়াল বুক করার পর রিসেপশনে গিয়ে টাকা পরিশোধ করুন</strong></li>
+                        <li><strong>After booking online, please visit reception to make payment</strong></li>
+                        <li>Payment must be made before seeing the doctor</li>
+                        <li>টাকা পরিশোধের পর ডাক্তারের কাছে যেতে পারবেন</li>
+                    </ul>
+                </div>
+
+                <form method="post" id="bookingForm">
+                    {% csrf_token %}
+                    
+                    <!-- Patient Name -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-person"></i> রোগীর নাম / Patient Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" name="patient_name" 
+                               placeholder="Enter full name / পূর্ণ নাম লিখুন" required>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-phone"></i> ফোন নম্বর / Phone Number <span class="text-danger">*</span>
+                        </label>
+                        <input type="tel" class="form-control" name="phone" 
+                               placeholder="01XXXXXXXXX" pattern="01[0-9]{9}" required>
+                        <small class="text-muted">Format: 01XXXXXXXXX</small>
+                    </div>
+
+                    <!-- Age and Gender Row -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-calendar3"></i> বয়স / Age <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" name="age" 
+                                   min="1" max="150" placeholder="Enter age" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-gender-ambiguous"></i> লিঙ্গ / Gender <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" name="gender" required>
+                                <option value="">Select / নির্বাচন করুন</option>
+                                <option value="M">পুরুষ / Male</option>
+                                <option value="F">মহিলা / Female</option>
+                                <option value="O">অন্যান্য / Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Doctor Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-person-badge"></i> ডাক্তার নির্বাচন করুন / Select Doctor <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" name="doctor" required>
+                            <option value="">নির্বাচন করুন / Select Doctor</option>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}">
+                                {{ doctor.get_full_name }}
+                                {% if doctor.specialization %} - {{ doctor.specialization }}{% endif %}
+                                (Fee: ৳{{ doctor.consultation_fee|default:"500" }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Reason -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-chat-left-text"></i> সমস্যা / Reason for Visit (Optional)
+                        </label>
+                        <textarea class="form-control" name="reason" rows="3" 
+                                  placeholder="আপনার সমস্যা সংক্ষেপে লিখুন / Describe your problem briefly"></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-book">
+                        <i class="bi bi-check-circle"></i> সিরিয়াল বুক করুন / Book Appointment
+                    </button>
+                </form>
+
+                <!-- Additional Info -->
+                <div class="mt-4 text-center">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check"></i> Your information is safe with us<br>
+                        আপনার তথ্য আমাদের কাছে সুরক্ষিত
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="text-center mt-4 text-white">
+            <p>
+                <i class="bi bi-telephone"></i> Emergency: 01332-856002<br>
+                <i class="bi bi-geo-alt"></i> Nazipur, Pirojpur
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form validation
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            const phone = document.querySelector('input[name="phone"]').value;
+            const phoneRegex = /^01[0-9]{9}$/;
+            
+            if (!phoneRegex.test(phone)) {
+                e.preventDefault();
+                alert('দয়া করে সঠিক ফোন নম্বর লিখুন\nPlease enter valid phone number (01XXXXXXXXX)');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

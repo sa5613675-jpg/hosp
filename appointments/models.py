@@ -49,7 +49,16 @@ class Appointment(models.Model):
         ('walk_in', 'Walk-in'),
         ('scheduled', 'Scheduled'),
         ('emergency', 'Emergency'),
+        ('online', 'Online Booking'),
     ], default='walk_in')
+    
+    # Online booking specific
+    is_online_booking = models.BooleanField(default=False)
+    online_payment_status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending Payment'),
+        ('paid', 'Paid'),
+        ('confirmed', 'Confirmed'),
+    ], default='pending', blank=True)
     
     # Additional information
     reason = models.TextField(blank=True, help_text="Reason for visit")

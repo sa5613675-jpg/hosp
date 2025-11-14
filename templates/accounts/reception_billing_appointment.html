@@ -13,13 +13,21 @@
                 </div>
                 <div class="card-body">
                     <!-- Appointment Details -->
-                    <div class="alert alert-info">
+                    <div class="alert {% if appointment.is_online_booking %}alert-warning{% else %}alert-info{% endif %}">
                         <h5>Appointment: {{ appointment.appointment_number }}</h5>
+                        {% if appointment.is_online_booking %}
+                        <div class="badge bg-warning text-dark mb-2">
+                            <i class="bi bi-globe"></i> ONLINE BOOKING - NOT PAID
+                        </div>
+                        {% endif %}
                         <p class="mb-0">
                             <strong>Patient:</strong> {{ appointment.patient.get_full_name }} ({{ appointment.patient.patient_id }})<br>
                             <strong>Doctor:</strong> Dr. {{ appointment.doctor.get_full_name }}<br>
                             <strong>Serial:</strong> #{{ appointment.serial_number }}<br>
                             <strong>Date:</strong> {{ appointment.appointment_date|date:"d M Y" }}
+                            {% if appointment.is_online_booking %}
+                                <br><strong>Type:</strong> <span class="badge bg-warning text-dark">Online Appointment</span>
+                            {% endif %}
                         </p>
                     </div>
 

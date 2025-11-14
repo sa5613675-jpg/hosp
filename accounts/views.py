@@ -438,6 +438,13 @@ def receptionist_dashboard(request):
     waiting_appointments = today_appointments.filter(status='waiting').count()
     in_consultation = today_appointments.filter(status='in_consultation').count()
     
+    # Online appointments needing payment
+    online_pending_payment = today_appointments.filter(
+        is_online_booking=True,
+        online_payment_status='pending',
+        payment_status='unpaid'
+    ).order_by('serial_number')
+    
     # New patient registrations today
     new_patients_today = Patient.objects.filter(
         registered_at__date=today
@@ -539,6 +546,7 @@ def receptionist_dashboard(request):
         'completed_appointments': completed_appointments,
         'waiting_appointments': waiting_appointments,
         'in_consultation': in_consultation,
+        'online_pending_payment': online_pending_payment,
         'new_patients_today': new_patients_today,
         'recent_patients': recent_patients,
         'appointments_by_doctor': appointments_by_doctor,
@@ -1889,6 +1897,11 @@ def reception_billing_appointment(request, appointment_id):
             
             # Mark as paid
             appointment.payment_status = 'paid'
+            
+            # If online booking, update online payment status to confirmed
+            if appointment.is_online_booking:
+                appointment.online_payment_status = 'confirmed'
+            
             appointment.save()
             
             messages.success(request, f'✅ Payment received: ৳{final_amount:.2f}')

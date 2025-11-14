@@ -252,6 +252,60 @@
     </div>
 </div>
 
+<!-- Online Appointments Pending Payment -->
+{% if online_pending_payment %}
+<div class="card mb-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">
+            <i class="bi bi-globe"></i> অনলাইন সিরিয়াল - টাকা পরিশোধ বাকি
+            <span class="badge bg-danger">{{ online_pending_payment.count }}</span>
+        </h5>
+        <small>Online Appointments - Payment Pending</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Serial</th>
+                        <th>Patient</th>
+                        <th>Phone</th>
+                        <th>Doctor</th>
+                        <th>Fee</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for apt in online_pending_payment %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-warning text-dark fs-6">{{ apt.serial_number }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ apt.patient.get_full_name }}</strong><br>
+                            <small class="text-muted">{{ apt.patient.age }} years, {{ apt.patient.get_gender_display }}</small>
+                        </td>
+                        <td><i class="bi bi-phone"></i> {{ apt.patient.phone }}</td>
+                        <td>{{ apt.doctor.get_full_name }}</td>
+                        <td>
+                            <strong class="text-danger">৳{{ apt.consultation_fee }}</strong><br>
+                            <small class="badge bg-danger">NOT PAID</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'accounts:reception_billing_appointment' apt.id %}" 
+                               class="btn btn-success btn-sm">
+                                <i class="bi bi-cash-coin"></i> Collect Payment
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Recent Patients -->
 <div class="card">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
