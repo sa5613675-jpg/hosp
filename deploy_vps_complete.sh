@@ -17,8 +17,22 @@ echo "  6. Restart services"
 echo ""
 read -p "Press ENTER to continue or CTRL+C to cancel..."
 
+# Detect project directory
+if [ -d "/root/hosp" ]; then
+    PROJECT_DIR="/root/hosp"
+elif [ -d "/var/www/hosp" ]; then
+    PROJECT_DIR="/var/www/hosp"
+else
+    echo "Error: Could not find project directory!"
+    echo "Please run this script from the project directory or specify the path."
+    exit 1
+fi
+
+echo ""
+echo "Using project directory: $PROJECT_DIR"
+
 # Navigate to project
-cd /root/hosp || exit 1
+cd "$PROJECT_DIR" || exit 1
 
 # Activate virtual environment
 echo ""
