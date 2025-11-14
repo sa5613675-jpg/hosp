@@ -586,6 +586,12 @@ def online_booking(request):
             
             next_serial = (last_serial or 0) + 1
             
+            # Get consultation fee
+            try:
+                consultation_fee = float(doctor.consultation_fee)
+            except:
+                consultation_fee = 500.00
+            
             # Create online appointment
             appointment = Appointment.objects.create(
                 patient=patient,
@@ -598,29 +604,47 @@ def online_booking(request):
                 payment_status='unpaid',
                 status='waiting',
                 reason=reason,
-                consultation_fee=doctor.consultation_fee if hasattr(doctor, 'consultation_fee') else 500
+                consultation_fee=consultation_fee
             )
             
-            messages.success(
-                request,
-                f'✅ অনলাইন সিরিয়াল বুক হয়েছে! / Online Appointment Booked!<br>'
-                f'সিরিয়াল নম্বর / Serial: {next_serial}<br>'
-                f'ডাক্তার / Doctor: {doctor.get_full_name()}<br>'
-                f'ফোন / Phone: {phone}<br><br>'
-                f'<strong>দয়া করে রিসেপশনে গিয়ে টাকা পরিশোধ করুন</strong><br>'
-                f'<strong>Please visit reception to make payment</strong>'
-            )
+            # Store booking details in session for success page
+            request.session['booking_success'] = {
+                'serial_number': next_serial,
+                'patient_name': patient_name,
+                'phone': phone,
+                'doctor_name': doctor.get_full_name(),
+                'consultation_fee': str(consultation_fee),
+                'appointment_number': appointment.appointment_number,
+            }
             
-            return redirect('appointments:online_booking')
+            return redirect('appointments:booking_success')
             
         except User.DoesNotExist:
             messages.error(request, 'Invalid doctor selection')
         except Exception as e:
             messages.error(request, f'Error: {str(e)}')
+            import traceback
+            print(traceback.format_exc())
     
     context = {
         'doctors': doctors,
     }
     
     return render(request, 'appointments/online_booking.html', context)
+
+
+def booking_success(request):
+    """Show booking success with serial number and payment instructions"""
+    booking_details = request.session.get('booking_success')
+    
+    if not booking_details:
+        messages.warning(request, 'No booking information found')
+        return redirect('appointments:online_booking')
+    
+    # Clear the session data after retrieving
+    del request.session['booking_success']
+    
+    return render(request, 'appointments/booking_success.html', {
+        'booking': booking_details
+    })
 

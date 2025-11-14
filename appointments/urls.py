@@ -7,6 +7,7 @@ urlpatterns = [
     # Public URLs (no login required) - MUST BE FIRST
     path('book/', views.public_booking, name='public_booking'),
     path('online-booking/', views.online_booking, name='online_booking'),
+    path('booking-success/', views.booking_success, name='booking_success'),
     path('monitor/', views.display_monitor, name='display_monitor'),
     path('tts/bengali/', views.bengali_tts, name='bengali_tts'),
     
