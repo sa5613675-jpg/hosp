@@ -75,5 +75,10 @@ urlpatterns = [
     path('api/pc-lookup/', pc_views.pc_lookup_api, name='pc_lookup_api'),
     path('api/call-next-patient/', views.call_next_patient, name='call_next_patient'),
     path('api/prescription/<int:prescription_id>/mark-printed/', views.mark_prescription_printed, name='mark_prescription_printed'),
+    
+    # Public PC Member Directory Pages
+    path('public/general-member/', views.public_general_members, name='public_general_members'),
+    path('public/lifetime-member/', views.public_lifetime_members, name='public_lifetime_members'),
+    path('public/investor/', views.public_investor_members, name='public_investor_members'),
 ]
 

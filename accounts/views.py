@@ -2104,3 +2104,79 @@ def collect_lab_payment(request, bill_id):
     
     return render(request, 'accounts/collect_lab_payment.html', context)
 
+
+# ============================================
+# PUBLIC PC MEMBER DIRECTORY PAGES
+# ============================================
+
+def public_general_members(request):
+    """Public page showing all general PC members with search"""
+    search_query = request.GET.get('search', '').strip()
+    
+    members = PCMember.objects.filter(
+        member_type='GENERAL',
+        is_active=True
+    ).order_by('pc_code')
+    
+    if search_query:
+        members = members.filter(
+            models.Q(name__icontains=search_query) |
+            models.Q(pc_code__icontains=search_query)
+        )
+    
+    return render(request, 'accounts/public_pc_members.html', {
+        'members': members,
+        'member_type': 'General Member',
+        'member_type_bn': 'সাধারণ সদস্য',
+        'search_query': search_query,
+        'page_url': 'general-member'
+    })
+
+
+def public_lifetime_members(request):
+    """Public page showing all lifetime PC members with search"""
+    search_query = request.GET.get('search', '').strip()
+    
+    members = PCMember.objects.filter(
+        member_type='LIFETIME',
+        is_active=True
+    ).order_by('pc_code')
+    
+    if search_query:
+        members = members.filter(
+            models.Q(name__icontains=search_query) |
+            models.Q(pc_code__icontains=search_query)
+        )
+    
+    return render(request, 'accounts/public_pc_members.html', {
+        'members': members,
+        'member_type': 'Lifetime Member',
+        'member_type_bn': 'লাইফটাইম সদস্য',
+        'search_query': search_query,
+        'page_url': 'lifetime-member'
+    })
+
+
+def public_investor_members(request):
+    """Public page showing all premium/investor PC members with search"""
+    search_query = request.GET.get('search', '').strip()
+    
+    members = PCMember.objects.filter(
+        member_type='PREMIUM',
+        is_active=True
+    ).order_by('pc_code')
+    
+    if search_query:
+        members = members.filter(
+            models.Q(name__icontains=search_query) |
+            models.Q(pc_code__icontains=search_query)
+        )
+    
+    return render(request, 'accounts/public_pc_members.html', {
+        'members': members,
+        'member_type': 'Investor',
+        'member_type_bn': 'বিনিয়োগকারী',
+        'search_query': search_query,
+        'page_url': 'investor'
+    })
+
