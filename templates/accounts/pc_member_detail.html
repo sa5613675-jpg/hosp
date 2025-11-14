@@ -6,9 +6,6 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-person-badge"></i> PC Member Details</h2>
     <div>
-        <a href="{% url 'accounts:manage_pc_commission' member.pc_code %}" class="btn btn-warning">
-            <i class="bi bi-percent"></i> Edit Commission Rates
-        </a>
         <a href="{% url 'accounts:pc_member_list' member.member_type %}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Back to {{ member.get_member_type_display }} List
         </a>
@@ -75,19 +72,47 @@
                 <hr>
                 
                 <div class="mb-3">
-                    <h6 class="text-muted mb-2">Commission Details</h6>
-                    <p class="mb-2">
-                        <strong>Default Rate:</strong> 
-                        <span class="badge bg-secondary fs-6">{{ member.commission_percentage }}%</span>
-                    </p>
+                    <h6 class="text-muted mb-2">Commission Rates (Fixed)</h6>
+                    {% if member.member_type == 'GENERAL' %}
                     <p class="mb-2">
                         <strong>Normal Tests:</strong> 
-                        <span class="badge bg-primary fs-6">{{ member.normal_test_commission }}%</span>
+                        <span class="badge bg-primary fs-6">15.00%</span>
                     </p>
                     <p class="mb-2">
                         <strong>Digital Tests:</strong> 
-                        <span class="badge bg-info fs-6">{{ member.digital_test_commission }}%</span>
+                        <span class="badge bg-info fs-6">20.00%</span>
                     </p>
+                    <p class="mb-2">
+                        <strong>Other Services:</strong> 
+                        <span class="badge bg-secondary fs-6">15.00%</span>
+                    </p>
+                    {% elif member.member_type == 'LIFETIME' %}
+                    <p class="mb-2">
+                        <strong>Normal Tests:</strong> 
+                        <span class="badge bg-primary fs-6">20.00%</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Digital Tests:</strong> 
+                        <span class="badge bg-info fs-6">25.00%</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Other Services:</strong> 
+                        <span class="badge bg-secondary fs-6">20.00%</span>
+                    </p>
+                    {% else %}
+                    <p class="mb-2">
+                        <strong>Normal Tests:</strong> 
+                        <span class="badge bg-primary fs-6">25.00%</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Digital Tests:</strong> 
+                        <span class="badge bg-info fs-6">30.00%</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Other Services:</strong> 
+                        <span class="badge bg-secondary fs-6">25.00%</span>
+                    </p>
+                    {% endif %}
                     <p class="mb-0">
                         <strong>Member Since:</strong> {{ member.created_at|date:"d M Y" }}
                     </p>

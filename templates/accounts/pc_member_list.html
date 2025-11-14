@@ -111,7 +111,18 @@
                                 <span class="text-muted">—</span>
                             {% endif %}
                         </td>
-                        <td><span class="badge bg-success">{{ member.commission_percentage }}%</span></td>
+                        <td>
+                            {% if member_type == 'GENERAL' %}
+                                <span class="badge bg-primary">Normal: 15.00%</span><br>
+                                <span class="badge bg-info">Digital: 20.00%</span>
+                            {% elif member_type == 'LIFETIME' %}
+                                <span class="badge bg-primary">Normal: 20.00%</span><br>
+                                <span class="badge bg-info">Digital: 25.00%</span>
+                            {% else %}
+                                <span class="badge bg-primary">Normal: 25.00%</span><br>
+                                <span class="badge bg-info">Digital: 30.00%</span>
+                            {% endif %}
+                        </td>
                         <td>
                             <span class="badge bg-primary">{{ member.total_referrals }}</span>
                         </td>
@@ -139,11 +150,6 @@
                                    class="btn btn-outline-primary" 
                                    title="View Details">
                                     <i class="bi bi-eye"></i>
-                                </a>
-                                <a href="{% url 'accounts:manage_pc_commission' member.pc_code %}" 
-                                   class="btn btn-outline-warning" 
-                                   title="Edit Commission Rates">
-                                    <i class="bi bi-percent"></i>
                                 </a>
                                 <a href="{% url 'accounts:pc_transaction_create' %}?member={{ member.pk }}" 
                                    class="btn btn-outline-success" 
@@ -225,14 +231,27 @@
 <div class="alert alert-info mt-4">
     <h6 class="alert-heading"><i class="bi bi-info-circle"></i> {{ type_info.name }} Member Information</h6>
     <p class="mb-0">
-        <strong>Commission Rate:</strong> Fixed {{ type_info.percentage }}% on all referrals<br>
+        <strong>Commission Rates (Fixed):</strong><br>
+        {% if member_type == 'GENERAL' %}
+            • Normal Tests: 15.00%<br>
+            • Digital Tests: 20.00%<br>
+            • Other Services: 15.00%<br>
+        {% elif member_type == 'LIFETIME' %}
+            • Normal Tests: 20.00%<br>
+            • Digital Tests: 25.00%<br>
+            • Other Services: 20.00%<br>
+        {% else %}
+            • Normal Tests: 25.00%<br>
+            • Digital Tests: 30.00%<br>
+            • Other Services: 25.00%<br>
+        {% endif %}
         <strong>Code Range:</strong> 
         {% if member_type == 'GENERAL' %}
-            1xxxx (10001-19999)
+            1xxxx (100001-199999)
         {% elif member_type == 'LIFETIME' %}
-            2xxxx (20001-29999)
-        {% elif member_type == 'INVESTOR' %}
-            3xxxx (30001-39999)
+            2xxxx (200001-299999)
+        {% elif member_type == 'PREMIUM' %}
+            3xxxx (300001-399999)
         {% endif %}
         <br>
         <strong>Actions:</strong> Click "Paid" button to mark all unpaid commissions as paid and reset balance to ৳0.

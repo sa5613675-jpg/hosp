@@ -86,19 +86,16 @@
 <div class="row g-4 mb-4">
     <div class="col-md-4">
         <div class="card bg-light">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white">
                 <h5 class="mb-0"><i class="bi bi-circle-fill text-secondary"></i> General Members</h5>
-                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editGeneralRatesModal">
-                    <i class="bi bi-percent"></i> Edit Rates
-                </button>
             </div>
             <div class="card-body">
                 <p class="mb-2"><strong>Count:</strong> {{ general_count }}</p>
-                <p class="mb-2"><strong>Commission Rates:</strong></p>
+                <p class="mb-2"><strong>Commission Rates (Fixed):</strong></p>
                 <ul class="mb-2">
-                    <li><span class="badge bg-primary">Normal Tests:</span> {% if general_rates %}{{ general_rates.normal_test_commission }}{% else %}15.00{% endif %}%</li>
-                    <li><span class="badge bg-info">Digital Tests:</span> {% if general_rates %}{{ general_rates.digital_test_commission }}{% else %}20.00{% endif %}%</li>
-                    <li>Other Services: {% if general_rates %}{{ general_rates.commission_percentage }}{% else %}15.00{% endif %}%</li>
+                    <li><span class="badge bg-primary">Normal Tests:</span> 15.00%</li>
+                    <li><span class="badge bg-info">Digital Tests:</span> 20.00%</li>
+                    <li>Other Services: 15.00%</li>
                 </ul>
                 <p class="mb-2"><strong>Total Earned:</strong> ৳{{ general_commission|floatformat:2 }}</p>
                 <p class="mb-3"><strong>Code Range:</strong> 1xxxx (10001-19999)</p>
@@ -114,20 +111,15 @@
     <div class="col-md-4">
         <div class="card bg-light">
             <div class="card-header" style="background-color: #cfe2ff;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-circle-fill text-primary"></i> Lifetime Members</h5>
-                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editLifetimeRatesModal">
-                        <i class="bi bi-percent"></i> Edit Rates
-                    </button>
-                </div>
+                <h5 class="mb-0"><i class="bi bi-circle-fill text-primary"></i> Lifetime Members</h5>
             </div>
             <div class="card-body">
                 <p class="mb-2"><strong>Count:</strong> {{ lifetime_count }}</p>
-                <p class="mb-2"><strong>Commission Rates:</strong></p>
+                <p class="mb-2"><strong>Commission Rates (Fixed):</strong></p>
                 <ul class="mb-2">
-                    <li><span class="badge bg-primary">Normal Tests:</span> {% if lifetime_rates %}{{ lifetime_rates.normal_test_commission }}{% else %}20.00{% endif %}%</li>
-                    <li><span class="badge bg-info">Digital Tests:</span> {% if lifetime_rates %}{{ lifetime_rates.digital_test_commission }}{% else %}25.00{% endif %}%</li>
-                    <li>Other Services: {% if lifetime_rates %}{{ lifetime_rates.commission_percentage }}{% else %}20.00{% endif %}%</li>
+                    <li><span class="badge bg-primary">Normal Tests:</span> 20.00%</li>
+                    <li><span class="badge bg-info">Digital Tests:</span> 25.00%</li>
+                    <li>Other Services: 20.00%</li>
                 </ul>
                 <p class="mb-2"><strong>Total Earned:</strong> ৳{{ lifetime_commission|floatformat:2 }}</p>
                 <p class="mb-3"><strong>Code Range:</strong> 2xxxx (20001-29999)</p>
@@ -143,20 +135,15 @@
     <div class="col-md-4">
         <div class="card bg-light">
             <div class="card-header" style="background-color: #d1e7dd;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-circle-fill text-success"></i> Premium Members</h5>
-                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editPremiumRatesModal">
-                        <i class="bi bi-percent"></i> Edit Rates
-                    </button>
-                </div>
+                <h5 class="mb-0"><i class="bi bi-circle-fill text-success"></i> Premium Members</h5>
             </div>
             <div class="card-body">
                 <p class="mb-2"><strong>Count:</strong> {{ investor_count }}</p>
-                <p class="mb-2"><strong>Commission Rates:</strong></p>
+                <p class="mb-2"><strong>Commission Rates (Fixed):</strong></p>
                 <ul class="mb-2">
-                    <li><span class="badge bg-primary">Normal Tests:</span> {% if premium_rates %}{{ premium_rates.normal_test_commission }}{% else %}25.00{% endif %}%</li>
-                    <li><span class="badge bg-info">Digital Tests:</span> {% if premium_rates %}{{ premium_rates.digital_test_commission }}{% else %}30.00{% endif %}%</li>
-                    <li>Other Services: {% if premium_rates %}{{ premium_rates.commission_percentage }}{% else %}25.00{% endif %}%</li>
+                    <li><span class="badge bg-primary">Normal Tests:</span> 25.00%</li>
+                    <li><span class="badge bg-info">Digital Tests:</span> 30.00%</li>
+                    <li>Other Services: 25.00%</li>
                 </ul>
                 <p class="mb-2"><strong>Total Earned:</strong> ৳{{ investor_commission|floatformat:2 }}</p>
                 <p class="mb-3"><strong>Code Range:</strong> 3xxxx (30001-39999)</p>
@@ -371,126 +358,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-<!-- Edit General Members Rates Modal -->
-<div class="modal fade" id="editGeneralRatesModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form method="post" action="{% url 'accounts:update_default_rates' 'GENERAL' %}">
-                {% csrf_token %}
-                <div class="modal-header bg-secondary text-white">
-                    <h5 class="modal-title"><i class="bi bi-percent"></i> Edit General Member Rates</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Normal Test Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="normal_test_commission" value="{% if general_rates %}{{ general_rates.normal_test_commission }}{% else %}15.00{% endif %}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Digital Test Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="digital_test_commission" value="{% if general_rates %}{{ general_rates.digital_test_commission }}{% else %}20.00{% endif %}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Other Services Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="commission_percentage" value="{% if general_rates %}{{ general_rates.commission_percentage }}{% else %}15.00{% endif %}" required>
-                    </div>
-                    <div class="alert alert-info mb-0">
-                        <small><i class="bi bi-info-circle"></i> This will update default rates for {{ general_count }} General member(s).</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Update Rates</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Lifetime Members Rates Modal -->
-<div class="modal fade" id="editLifetimeRatesModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form method="post" action="{% url 'accounts:update_default_rates' 'LIFETIME' %}">
-                {% csrf_token %}
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="bi bi-percent"></i> Edit Lifetime Member Rates</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Normal Test Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="normal_test_commission" value="{% if lifetime_rates %}{{ lifetime_rates.normal_test_commission }}{% else %}20.00{% endif %}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Digital Test Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="digital_test_commission" value="{% if lifetime_rates %}{{ lifetime_rates.digital_test_commission }}{% else %}25.00{% endif %}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Other Services Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="commission_percentage" value="{% if lifetime_rates %}{{ lifetime_rates.commission_percentage }}{% else %}20.00{% endif %}" required>
-                    </div>
-                    <div class="alert alert-info mb-0">
-                        <small><i class="bi bi-info-circle"></i> This will update default rates for {{ lifetime_count }} Lifetime member(s).</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Update Rates</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Premium Members Rates Modal -->
-<div class="modal fade" id="editPremiumRatesModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form method="post" action="{% url 'accounts:update_default_rates' 'PREMIUM' %}">
-                {% csrf_token %}
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title"><i class="bi bi-percent"></i> Edit Premium Member Rates</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Normal Test Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="normal_test_commission" value="{% if premium_rates %}{{ premium_rates.normal_test_commission }}{% else %}25.00{% endif %}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Digital Test Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="digital_test_commission" value="{% if premium_rates %}{{ premium_rates.digital_test_commission }}{% else %}30.00{% endif %}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Other Services Commission (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" 
-                               name="commission_percentage" value="{% if premium_rates %}{{ premium_rates.commission_percentage }}{% else %}25.00{% endif %}" required>
-                    </div>
-                    <div class="alert alert-info mb-0">
-                        <small><i class="bi bi-info-circle"></i> This will update default rates for {{ investor_count }} Premium member(s).</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Update Rates</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-
 
 <style>
 .card {
