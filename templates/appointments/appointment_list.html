@@ -154,12 +154,6 @@
                                    class="btn btn-outline-info" title="View">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                {% if appointment.status == 'waiting' %}
-                                <a href="{% url 'appointments:appointment_edit' appointment.pk %}" 
-                                   class="btn btn-outline-primary" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                {% endif %}
                                 {% if appointment.status == 'completed' and appointment.prescriptions.exists %}
                                 <a href="{% url 'appointments:prescription_detail' appointment.prescriptions.first.pk %}" 
                                    class="btn btn-outline-success" title="Prescription">
