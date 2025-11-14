@@ -568,6 +568,10 @@ def online_booking(request):
                     'date_of_birth': date_of_birth,
                     'gender': gender,
                     'address': 'Online Booking',
+                    'city': 'Nazipur',
+                    'emergency_contact_name': '',
+                    'emergency_contact_phone': '',
+                    'emergency_contact_relation': '',
                 }
             )
             
