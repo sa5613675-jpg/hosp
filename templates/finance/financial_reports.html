@@ -59,24 +59,47 @@
             </div>
         </div>
 
-        <!-- Custom Date Range -->
+        <!-- Yearly Report -->
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 border-success">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-calendar-range"></i> Custom Report</h5>
+                    <h5 class="mb-0"><i class="bi bi-calendar-range"></i> Yearly Report</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Generate report for custom date range</p>
+                    <p class="text-muted">View current year's financial summary</p>
                     <ul class="mb-3">
-                        <li>Select Date Range</li>
-                        <li>Income Summary</li>
-                        <li>Expense Summary</li>
-                        <li>Detailed Breakdown</li>
+                        <li>Yearly Income</li>
+                        <li>Yearly Expenses</li>
+                        <li>Net Profit/Loss</li>
+                        <li>Monthly Breakdown</li>
                     </ul>
                 </div>
                 <div class="card-footer bg-transparent">
-                    <a href="{% url 'finance:custom_report' %}" class="btn btn-success w-100">
-                        <i class="bi bi-eye"></i> View Custom Report
+                    <a href="{% url 'finance:yearly_report' %}" class="btn btn-success w-100">
+                        <i class="bi bi-eye"></i> View Yearly Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Report -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-dark">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Weekly Report</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">View current week's financial summary</p>
+                    <ul class="mb-3">
+                        <li>Weekly Income</li>
+                        <li>Weekly Expenses</li>
+                        <li>Net Profit/Loss</li>
+                        <li>Daily Breakdown</li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'finance:weekly_report' %}" class="btn btn-dark w-100">
+                        <i class="bi bi-eye"></i> View Weekly Report
                     </a>
                 </div>
             </div>
