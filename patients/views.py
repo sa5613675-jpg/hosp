@@ -101,3 +101,38 @@ def patient_history(request, pk):
         'patient': patient,
         'history': history
     })
+
+@login_required
+def patient_delete(request, pk):
+    """Delete patient (Admin only)"""
+    if not request.user.is_admin:
+        messages.error(request, "Access denied. Admin only.")
+        return redirect('patients:patient_list')
+    
+    patient = get_object_or_404(Patient, pk=pk)
+    
+    if request.method == 'POST':
+        patient_name = patient.get_full_name()
+        patient_id = patient.patient_id
+        
+        # Check if patient has appointments
+        from appointments.models import Appointment
+        appointment_count = Appointment.objects.filter(patient=patient).count()
+        
+        if appointment_count > 0:
+            # Don't delete, just mark as inactive or show warning
+            messages.warning(
+                request,
+                f'Cannot delete patient {patient_name} ({patient_id}). '
+                f'Patient has {appointment_count} appointment(s) in the system.'
+            )
+        else:
+            # Safe to delete
+            patient.delete()
+            messages.success(
+                request,
+                f'Patient {patient_name} ({patient_id}) has been deleted successfully.'
+            )
+            return redirect('patients:patient_list')
+    
+    return redirect('patients:patient_detail', pk=pk)

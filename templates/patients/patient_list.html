@@ -96,9 +96,12 @@
                                 <a href="{% url 'appointments:appointment_create' %}?patient={{ patient.pk }}" class="btn btn-outline-success" title="Book Appointment">
                                     <i class="bi bi-calendar-plus"></i>
                                 </a>
-                                <a href="{% url 'patients:patient_delete' patient.pk %}" class="btn btn-outline-danger" title="Delete">
+                                {% if user.is_admin %}
+                                <button type="button" class="btn btn-outline-danger" title="Delete" 
+                                        onclick="confirmDelete('{{ patient.pk }}', '{{ patient.get_full_name }}', '{{ patient.patient_id }}')">
                                     <i class="bi bi-trash"></i>
-                                </a>
+                                </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -121,4 +124,25 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+function confirmDelete(patientId, patientName, patientIdNumber) {
+    if (confirm(`Are you sure you want to delete patient ${patientName} (${patientIdNumber})?\n\nThis action cannot be undone if the patient has no appointments.`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/patients/${patientId}/delete/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        
+        form.appendChild(csrfInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}
