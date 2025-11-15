@@ -26,6 +26,10 @@
                         {% endfor %}
                     {% endif %}
                     
+                    <div id="formError" class="alert alert-danger" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i> <span id="formErrorMessage"></span>
+                    </div>
+                    
                     <!-- Member Type Selection -->
                     <div class="mb-4">
                         <label class="form-label fw-bold">Member Type * (Select to set fixed commission)</label>
@@ -195,9 +199,9 @@ function selectMemberType(type, card) {
         commissionNote.textContent = 'Lifetime members get fixed 35% commission';
         commissionNote.classList.remove('text-muted');
         commissionNote.classList.add('text-primary');
-    } else if (type === 'INVESTOR') {
+    } else if (type === 'PREMIUM') {
         commissionInput.value = '50.00';
-        commissionNote.textContent = 'Investor members get fixed 50% commission';
+        commissionNote.textContent = 'Premium members get fixed 50% commission';
         commissionNote.classList.remove('text-muted');
         commissionNote.classList.add('text-success');
     }
@@ -209,6 +213,22 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!commissionInput.value) {
         commissionInput.value = '';
     }
+    
+    // Add form submission validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const memberType = document.querySelector('input[name="member_type"]:checked');
+        if (!memberType) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('formError');
+            const errorMsg = document.getElementById('formErrorMessage');
+            errorMsg.textContent = 'Please select a member type (General, Lifetime, or Premium)';
+            errorDiv.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
+        }
+        console.log('Submitting member type:', memberType.value);
+    });
 });
 });
 </script>
