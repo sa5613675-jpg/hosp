@@ -93,17 +93,17 @@
                 <p class="mb-2"><strong>Count:</strong> {{ general_count }}</p>
                 <p class="mb-2"><strong>Commission Rates (Fixed):</strong></p>
                 <ul class="mb-2">
-                    <li><span class="badge bg-primary">Normal Tests:</span> 15.00%</li>
-                    <li><span class="badge bg-info">Digital Tests:</span> 20.00%</li>
-                    <li>Other Services: 15.00%</li>
+                    <li><span class="badge bg-primary">Normal Tests:</span> {{ general_rates.normal_test_commission|default:"15.00" }}%</li>
+                    <li><span class="badge bg-info">Digital Tests:</span> {{ general_rates.digital_test_commission|default:"20.00" }}%</li>
+                    <li>Other Services: {{ general_rates.commission_percentage|default:"15.00" }}%</li>
                 </ul>
                 <p class="mb-2"><strong>Total Earned:</strong> ৳{{ general_commission|floatformat:2 }}</p>
-                <p class="mb-3"><strong>Code Range:</strong> 1xxxx (10001-19999)</p>
+                <p class="mb-3"><strong>Code Range:</strong> 1xxxx (100001-199999)</p>
                 <div class="d-grid gap-2">
                     <a href="{% url 'accounts:pc_member_list' 'GENERAL' %}" class="btn btn-secondary">
                         <i class="bi bi-eye"></i> View General Members
                     </a>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editRatesModal" onclick="setEditRates('GENERAL', 15.00, 20.00, 15.00)">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editRatesModal" onclick="setEditRates('GENERAL', {{ general_rates.normal_test_commission|default:'15.00' }}, {{ general_rates.digital_test_commission|default:'20.00' }}, {{ general_rates.commission_percentage|default:'15.00' }})">
                         <i class="bi bi-pencil"></i> Edit Rates
                     </button>
                 </div>
@@ -120,17 +120,17 @@
                 <p class="mb-2"><strong>Count:</strong> {{ lifetime_count }}</p>
                 <p class="mb-2"><strong>Commission Rates (Fixed):</strong></p>
                 <ul class="mb-2">
-                    <li><span class="badge bg-primary">Normal Tests:</span> 20.00%</li>
-                    <li><span class="badge bg-info">Digital Tests:</span> 25.00%</li>
-                    <li>Other Services: 20.00%</li>
+                    <li><span class="badge bg-primary">Normal Tests:</span> {{ lifetime_rates.normal_test_commission|default:"20.00" }}%</li>
+                    <li><span class="badge bg-info">Digital Tests:</span> {{ lifetime_rates.digital_test_commission|default:"25.00" }}%</li>
+                    <li>Other Services: {{ lifetime_rates.commission_percentage|default:"20.00" }}%</li>
                 </ul>
                 <p class="mb-2"><strong>Total Earned:</strong> ৳{{ lifetime_commission|floatformat:2 }}</p>
-                <p class="mb-3"><strong>Code Range:</strong> 2xxxx (20001-29999)</p>
+                <p class="mb-3"><strong>Code Range:</strong> 2xxxx (200001-299999)</p>
                 <div class="d-grid gap-2">
                     <a href="{% url 'accounts:pc_member_list' 'LIFETIME' %}" class="btn btn-primary">
                         <i class="bi bi-eye"></i> View Lifetime Members
                     </a>
-                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editRatesModal" onclick="setEditRates('LIFETIME', 20.00, 25.00, 20.00)">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editRatesModal" onclick="setEditRates('LIFETIME', {{ lifetime_rates.normal_test_commission|default:'20.00' }}, {{ lifetime_rates.digital_test_commission|default:'25.00' }}, {{ lifetime_rates.commission_percentage|default:'20.00' }})">
                         <i class="bi bi-pencil"></i> Edit Rates
                     </button>
                 </div>
@@ -147,17 +147,17 @@
                 <p class="mb-2"><strong>Count:</strong> {{ investor_count }}</p>
                 <p class="mb-2"><strong>Commission Rates (Fixed):</strong></p>
                 <ul class="mb-2">
-                    <li><span class="badge bg-primary">Normal Tests:</span> 25.00%</li>
-                    <li><span class="badge bg-info">Digital Tests:</span> 30.00%</li>
-                    <li>Other Services: 25.00%</li>
+                    <li><span class="badge bg-primary">Normal Tests:</span> {{ premium_rates.normal_test_commission|default:"25.00" }}%</li>
+                    <li><span class="badge bg-info">Digital Tests:</span> {{ premium_rates.digital_test_commission|default:"30.00" }}%</li>
+                    <li>Other Services: {{ premium_rates.commission_percentage|default:"25.00" }}%</li>
                 </ul>
                 <p class="mb-2"><strong>Total Earned:</strong> ৳{{ investor_commission|floatformat:2 }}</p>
-                <p class="mb-3"><strong>Code Range:</strong> 3xxxx (30001-39999)</p>
+                <p class="mb-3"><strong>Code Range:</strong> 3xxxx (300001-399999)</p>
                 <div class="d-grid gap-2">
                     <a href="{% url 'accounts:pc_member_list' 'PREMIUM' %}" class="btn btn-success">
                         <i class="bi bi-eye"></i> View Premium Members
                     </a>
-                    <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#editRatesModal" onclick="setEditRates('PREMIUM', 25.00, 30.00, 25.00)">
+                    <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#editRatesModal" onclick="setEditRates('PREMIUM', {{ premium_rates.normal_test_commission|default:'25.00' }}, {{ premium_rates.digital_test_commission|default:'30.00' }}, {{ premium_rates.commission_percentage|default:'25.00' }})">
                         <i class="bi bi-pencil"></i> Edit Rates
                     </button>
                 </div>
