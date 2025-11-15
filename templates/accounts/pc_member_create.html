@@ -39,8 +39,8 @@
                                     <div class="card-body text-center">
                                         <i class="bi bi-person fs-1 text-secondary"></i>
                                         <h5 class="mt-2">General Member</h5>
-                                        <p class="text-muted small mb-1">Code: 1xxxx</p>
-                                        <p class="mb-0"><span class="badge bg-secondary">Variable Rate</span></p>
+                                        <p class="text-muted small mb-1">Code: 1xxxxx</p>
+                                        <p class="mb-0"><span class="badge bg-secondary">15-20%</span></p>
                                         <div class="form-check mt-2">
                                             <input class="form-check-input" type="radio" name="member_type" 
                                                    value="GENERAL" id="type_general" required>
@@ -54,8 +54,8 @@
                                     <div class="card-body text-center">
                                         <i class="bi bi-star fs-1 text-primary"></i>
                                         <h5 class="mt-2">Lifetime Member</h5>
-                                        <p class="text-muted small mb-1">Code: 2xxxx</p>
-                                        <p class="mb-0"><span class="badge bg-primary">Variable Rate</span></p>
+                                        <p class="text-muted small mb-1">Code: 2xxxxx</p>
+                                        <p class="mb-0"><span class="badge bg-primary">20-25%</span></p>
                                         <div class="form-check mt-2">
                                             <input class="form-check-input" type="radio" name="member_type" 
                                                    value="LIFETIME" id="type_lifetime" required>
@@ -69,8 +69,8 @@
                                     <div class="card-body text-center">
                                         <i class="bi bi-gem fs-1 text-success"></i>
                                         <h5 class="mt-2">Premium Member</h5>
-                                        <p class="text-muted small mb-1">Code: 3xxxx</p>
-                                        <p class="mb-0"><span class="badge bg-success">Variable Rate</span></p>
+                                        <p class="text-muted small mb-1">Code: 3xxxxx</p>
+                                        <p class="mb-0"><span class="badge bg-success">25-30%</span></p>
                                         <div class="form-check mt-2">
                                             <input class="form-check-input" type="radio" name="member_type" 
                                                    value="PREMIUM" id="type_premium" required>
@@ -99,19 +99,9 @@
                     </div>
                     
                     <div class="row g-3 mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="email" class="form-label">Email (Optional)</label>
                             <input type="email" class="form-control" id="email" name="email">
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label for="commission_percentage" class="form-label">Commission Percentage *</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control bg-light" id="commission_percentage" 
-                                       name="commission_percentage" step="0.01" min="0" max="100" required readonly>
-                                <span class="input-group-text">%</span>
-                            </div>
-                            <small class="text-muted" id="commission_note">Select member type to see commission</small>
                         </div>
                     </div>
                     
@@ -148,11 +138,11 @@
         <!-- Information Box -->
         <div class="card mt-4 bg-light">
             <div class="card-body">
-                <h6><i class="bi bi-info-circle"></i> PC Member Types with Fixed Commission:</h6>
+                <h6><i class="bi bi-info-circle"></i> PC Member Types with Commission Rates:</h6>
                 <ul class="mb-0">
-                    <li><strong>General Member (1xxxx) - 30%:</strong> Standard commission members - Codes start with 1 (e.g., 100001, 100002)</li>
-                    <li><strong>Lifetime Member (2xxxx) - 35%:</strong> Long-term partnership members - Codes start with 2 (e.g., 200001, 200002)</li>
-                    <li><strong>Premium Member (3xxxx) - 50%:</strong> Premium/Investor members - Codes start with 3 (e.g., 300001, 300002)</li>
+                    <li><strong>General Member (1xxxxx):</strong> Normal 15%, Digital 20% - Codes: 100001, 100002, etc.</li>
+                    <li><strong>Lifetime Member (2xxxxx):</strong> Normal 20%, Digital 25% - Codes: 200001, 200002, etc.</li>
+                    <li><strong>Premium Member (3xxxxx):</strong> Normal 25%, Digital 30% - Codes: 300001, 300002, etc.</li>
                 </ul>
             </div>
         </div>
@@ -184,52 +174,47 @@ function selectMemberType(type, card) {
     
     // Check the radio button
     document.getElementById('type_' + type.toLowerCase()).checked = true;
-    
-    // Set fixed commission percentage based on member type
-    const commissionInput = document.getElementById('commission_percentage');
-    const commissionNote = document.getElementById('commission_note');
-    
-    if (type === 'GENERAL') {
-        commissionInput.value = '30.00';
-        commissionNote.textContent = 'General members get fixed 30% commission';
-        commissionNote.classList.remove('text-muted');
-        commissionNote.classList.add('text-secondary');
-    } else if (type === 'LIFETIME') {
-        commissionInput.value = '35.00';
-        commissionNote.textContent = 'Lifetime members get fixed 35% commission';
-        commissionNote.classList.remove('text-muted');
-        commissionNote.classList.add('text-primary');
-    } else if (type === 'PREMIUM') {
-        commissionInput.value = '50.00';
-        commissionNote.textContent = 'Premium members get fixed 50% commission';
-        commissionNote.classList.remove('text-muted');
-        commissionNote.classList.add('text-success');
-    }
 }
 
-// Initialize on page load
+// Add form submission validation
 document.addEventListener('DOMContentLoaded', function() {
-    const commissionInput = document.getElementById('commission_percentage');
-    if (!commissionInput.value) {
-        commissionInput.value = '';
-    }
-    
-    // Add form submission validation
     const form = document.querySelector('form');
-    form.addEventListener('submit', function(e) {
-        const memberType = document.querySelector('input[name="member_type"]:checked');
-        if (!memberType) {
-            e.preventDefault();
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const memberType = document.querySelector('input[name="member_type"]:checked');
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            
             const errorDiv = document.getElementById('formError');
             const errorMsg = document.getElementById('formErrorMessage');
-            errorMsg.textContent = 'Please select a member type (General, Lifetime, or Premium)';
-            errorDiv.style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return false;
-        }
-        console.log('Submitting member type:', memberType.value);
-    });
-});
+            
+            if (!memberType) {
+                e.preventDefault();
+                errorMsg.textContent = 'Please select a member type (General, Lifetime, or Premium)';
+                errorDiv.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return false;
+            }
+            
+            if (!name) {
+                e.preventDefault();
+                errorMsg.textContent = 'Please enter the member name';
+                errorDiv.style.display = 'block';
+                document.getElementById('name').focus();
+                return false;
+            }
+            
+            if (!phone) {
+                e.preventDefault();
+                errorMsg.textContent = 'Please enter the phone number';
+                errorDiv.style.display = 'block';
+                document.getElementById('phone').focus();
+                return false;
+            }
+            
+            console.log('Submitting:', { type: memberType.value, name, phone });
+        });
+    }
 });
 </script>
 {% endblock %}
