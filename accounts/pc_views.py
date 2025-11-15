@@ -431,7 +431,7 @@ def pc_mark_paid(request, pc_code):
 
 @login_required
 def pc_member_delete(request, pc_code):
-    """Deactivate PC member (Admin only) - Never permanently delete for audit trail"""
+    """Delete PC member (Admin only) - Now allows deletion even with transactions"""
     if not request.user.is_admin:
         messages.error(request, "Access denied. Admin only.")
         return redirect('accounts:dashboard')
@@ -446,33 +446,25 @@ def pc_member_delete(request, pc_code):
     total_earned = member.total_commission_earned
     
     if request.method == 'POST':
-        # Always deactivate, never permanently delete (for audit trail)
-        if member.is_active:
-            member.is_active = False
-            member.save()
-            
-            # Build deactivation reason message
-            reasons = []
-            if transaction_count > 0:
-                reasons.append(f'{transaction_count} transaction(s)')
-            if has_due_amount:
-                reasons.append(f'৳{member.due_amount:.2f} unpaid commission')
-            if total_earned > 0:
-                reasons.append(f'৳{total_earned:.2f} total earned')
-            
-            reason_text = ', '.join(reasons) if reasons else 'No transaction history'
-            
-            messages.success(
-                request,
-                f'✅ PC Member "{member_name}" ({pc_code}) has been deactivated.<br>'
-                f'<strong>Reason:</strong> {reason_text}<br>'
-                f'<em>Member record preserved for audit trail.</em>'
-            )
-        else:
-            messages.info(
-                request,
-                f'PC Member "{member_name}" ({pc_code}) is already inactive.'
-            )
+        # Always permanently delete (user requested this behavior)
+        member.delete()
+        
+        # Build deletion info message
+        info_parts = []
+        if transaction_count > 0:
+            info_parts.append(f'{transaction_count} transaction(s)')
+        if has_due_amount:
+            info_parts.append(f'৳{member.due_amount:.2f} unpaid commission')
+        if total_earned > 0:
+            info_parts.append(f'৳{total_earned:.2f} total earned')
+        
+        info_text = ' - ' + ', '.join(info_parts) if info_parts else ''
+        
+        messages.success(
+            request,
+            f'✅ PC Member "{member_name}" ({pc_code}) has been permanently deleted.{info_text}',
+            extra_tags='safe'
+        )
         
         return redirect('accounts:pc_member_list', member_type=member_type)
     
