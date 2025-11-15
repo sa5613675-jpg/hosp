@@ -6,6 +6,7 @@ from django.db.models import Count, Sum, Q, F, Avg
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
+from decimal import Decimal
 from patients.models import Patient
 from appointments.models import Appointment, Prescription, Medicine
 from lab.models import LabTest, LabOrder, LabResult
@@ -1787,10 +1788,11 @@ def reception_billing_lab(request, order_id):
                         pc_member=pc_member,
                         patient=lab_order.patient,
                         total_amount=final_amount,
-                        commission_percentage=commission_percentage,
+                        commission_percentage=Decimal(str((commission_amount / final_amount * 100) if final_amount > 0 else 0)),
                         commission_amount=commission_amount,
                         admin_amount=admin_amount,
-                        recorded_by=request.user
+                        recorded_by=request.user,
+                        notes=f'Lab Order {lab_order.order_number}'
                     )
                     
                     # Update PC Member stats
