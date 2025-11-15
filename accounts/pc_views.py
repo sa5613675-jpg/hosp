@@ -430,6 +430,84 @@ def pc_mark_paid(request, pc_code):
 
 
 @login_required
+def pc_member_edit(request, pc_code):
+    """Edit PC member (Admin only)"""
+    if not request.user.is_admin:
+        messages.error(request, "Access denied. Admin only.")
+        return redirect('accounts:dashboard')
+    
+    member = get_object_or_404(PCMember, pc_code=pc_code)
+    
+    if request.method == 'POST':
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # Get form data
+            name = request.POST.get('name', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            email = request.POST.get('email', '').strip()
+            address = request.POST.get('address', '').strip()
+            notes = request.POST.get('notes', '').strip()
+            is_active = request.POST.get('is_active') == 'on'
+            
+            logger.info(f"PC Member Edit - Code: {pc_code}, Name: {name}, Active: {is_active}")
+            
+            # Validate required fields
+            errors = []
+            if not name:
+                errors.append("Name is required")
+            if not phone:
+                errors.append("Phone number is required")
+            
+            # Check for duplicate phone (excluding current member)
+            if phone and PCMember.objects.filter(phone=phone).exclude(pc_code=pc_code).exists():
+                errors.append(f"Phone number {phone} is already registered to another member")
+            
+            # If there are errors, show them and redirect
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+                return redirect('accounts:pc_member_edit', pc_code=pc_code)
+            
+            # Update member
+            member.name = name
+            member.phone = phone
+            member.email = email
+            member.address = address
+            member.notes = notes
+            member.is_active = is_active
+            member.save()
+            
+            logger.info(f"✅ PC Member updated: {member.pc_code} - {member.name}")
+            
+            messages.success(
+                request,
+                f'✅ PC Member updated successfully!<br>'
+                f'Code: <strong>{member.pc_code}</strong><br>'
+                f'Name: {member.name}<br>'
+                f'Status: {"Active" if member.is_active else "Inactive"}',
+                extra_tags='safe'
+            )
+            return redirect('accounts:pc_member_detail', pc_code=pc_code)
+            
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            messages.error(request, f"Error updating PC member: {str(e)}")
+            logger = logging.getLogger(__name__)
+            logger.error(f"PC Member update error: {error_details}")
+            return redirect('accounts:pc_member_edit', pc_code=pc_code)
+    
+    # GET request - show form
+    context = {
+        'member': member,
+    }
+    
+    return render(request, 'accounts/pc_member_edit.html', context)
+
+
+@login_required
 def pc_member_delete(request, pc_code):
     """Delete PC member (Admin only) - Now allows deletion even with transactions"""
     if not request.user.is_admin:

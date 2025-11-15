@@ -9,6 +9,9 @@
         <a href="{% url 'accounts:pc_member_list' member.member_type %}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Back to {{ member.get_member_type_display }} List
         </a>
+        <a href="{% url 'accounts:pc_member_edit' member.pc_code %}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
         <a href="{% url 'accounts:pc_transaction_create' %}?member={{ member.pk }}" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> Add Transaction
         </a>

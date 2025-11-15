@@ -154,6 +154,11 @@
                                    title="View Details">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <a href="{% url 'accounts:pc_member_edit' member.pc_code %}" 
+                                   class="btn btn-outline-info" 
+                                   title="Edit Member">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
                                 <a href="{% url 'accounts:pc_transaction_create' %}?member={{ member.pk }}" 
                                    class="btn btn-outline-success" 
                                    title="Add Transaction">

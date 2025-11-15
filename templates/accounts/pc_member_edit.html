@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit PC Member - {{ member.pc_code }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pencil-square"></i> Edit PC Member</h2>
+    <a href="{% url 'accounts:pc_member_detail' member.pc_code %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Details
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message|safe }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- PC Code (Read-only) -->
+                    <div class="mb-3">
+                        <label class="form-label">PC Code</label>
+                        <input type="text" class="form-control bg-light" value="{{ member.pc_code }}" readonly>
+                        <small class="text-muted">PC Code cannot be changed</small>
+                    </div>
+                    
+                    <!-- Member Type (Read-only) -->
+                    <div class="mb-3">
+                        <label class="form-label">Member Type</label>
+                        <input type="text" class="form-control bg-light" value="{{ member.get_member_type_display }}" readonly>
+                        <small class="text-muted">Member type cannot be changed</small>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Name -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="name" 
+                               name="name" 
+                               value="{{ member.name }}"
+                               required
+                               placeholder="Enter full name">
+                    </div>
+                    
+                    <!-- Phone -->
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <input type="tel" 
+                               class="form-control" 
+                               id="phone" 
+                               name="phone" 
+                               value="{{ member.phone }}"
+                               required
+                               placeholder="01XXXXXXXXX">
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email (Optional)</label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               value="{{ member.email }}"
+                               placeholder="email@example.com">
+                    </div>
+                    
+                    <!-- Address -->
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address (Optional)</label>
+                        <textarea class="form-control" 
+                                  id="address" 
+                                  name="address" 
+                                  rows="2" 
+                                  placeholder="Complete address">{{ member.address }}</textarea>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" 
+                                  id="notes" 
+                                  name="notes" 
+                                  rows="2" 
+                                  placeholder="Any additional information...">{{ member.notes }}</textarea>
+                    </div>
+                    
+                    <!-- Active Status -->
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="is_active" 
+                               name="is_active" 
+                               {% if member.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            Active Member (can receive commissions)
+                        </label>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Commission Rates (Read-only info) -->
+                    <div class="alert alert-info">
+                        <h6 class="mb-2"><i class="bi bi-info-circle"></i> Commission Rates (Fixed)</h6>
+                        <p class="mb-1">
+                            <strong>Normal Tests:</strong> {{ member.normal_test_commission }}%
+                        </p>
+                        <p class="mb-1">
+                            <strong>Digital Tests:</strong> {{ member.digital_test_commission }}%
+                        </p>
+                        <p class="mb-0">
+                            <strong>Other Services:</strong> {{ member.commission_percentage }}%
+                        </p>
+                        <small class="text-muted">Commission rates are fixed based on member type and cannot be edited individually.</small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'accounts:pc_member_detail' member.pc_code %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Update PC Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Information Box -->
+        <div class="card mt-4 bg-light">
+            <div class="card-body">
+                <h6 class="mb-3"><i class="bi bi-lightbulb"></i> Editing Guidelines</h6>
+                <ul class="mb-0">
+                    <li>PC Code and Member Type cannot be changed</li>
+                    <li>Commission rates are fixed based on member type</li>
+                    <li>Deactivating a member will prevent them from receiving new commissions</li>
+                    <li>Existing transactions and commission history will be preserved</li>
+                    <li>Phone number must be unique</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-label {
+    font-weight: 500;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+</style>
+
+<script>
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    
+    if (!name) {
+        e.preventDefault();
+        alert('Please enter member name');
+        document.getElementById('name').focus();
+        return;
+    }
+    
+    if (!phone) {
+        e.preventDefault();
+        alert('Please enter phone number');
+        document.getElementById('phone').focus();
+        return;
+    }
+});
+</script>
+{% endblock %}

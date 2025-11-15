@@ -64,9 +64,10 @@ urlpatterns = [
     
     # PC (Persistent Commission) System
     path('pc-dashboard/', pc_views.pc_dashboard, name='pc_dashboard'),
-    path('pc-members/<str:member_type>/', pc_views.pc_member_list, name='pc_member_list'),
     path('pc-members/create/', pc_views.pc_member_create, name='pc_member_create'),
+    path('pc-members/<str:member_type>/', pc_views.pc_member_list, name='pc_member_list'),
     path('pc-member/<str:pc_code>/', pc_views.pc_member_detail, name='pc_member_detail'),
+    path('pc-member/<str:pc_code>/edit/', pc_views.pc_member_edit, name='pc_member_edit'),
     path('pc-member/<str:pc_code>/mark-paid/', pc_views.pc_mark_paid, name='pc_mark_paid'),
     path('pc-member/<str:pc_code>/delete/', pc_views.pc_member_delete, name='pc_member_delete'),
     path('pc-transaction/create/', pc_views.pc_transaction_create, name='pc_transaction_create'),
