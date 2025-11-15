@@ -72,6 +72,10 @@ def pc_member_create(request):
         return redirect('accounts:dashboard')
     
     if request.method == 'POST':
+        # Debug logging
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
             # Get form data
             member_type = request.POST.get('member_type', '').strip().upper()
@@ -80,6 +84,9 @@ def pc_member_create(request):
             email = request.POST.get('email', '').strip()
             address = request.POST.get('address', '').strip()
             notes = request.POST.get('notes', '').strip()
+            is_active = request.POST.get('is_active') == 'on'  # Checkbox value
+            
+            logger.info(f"PC Member Creation - Type: {member_type}, Name: {name}, Phone: {phone}, Active: {is_active}")
             
             # Validate required fields
             errors = []
@@ -125,8 +132,11 @@ def pc_member_create(request):
                 normal_test_commission=rates['normal'],
                 digital_test_commission=rates['digital'],
                 notes=notes,
+                is_active=is_active,
                 created_by=request.user
             )
+            
+            logger.info(f"✅ PC Member created: {member.pc_code} - {member.name}")
             
             messages.success(
                 request,
@@ -134,12 +144,19 @@ def pc_member_create(request):
                 f'Code: <strong>{member.pc_code}</strong><br>'
                 f'Name: {member.name}<br>'
                 f'Type: {member.get_member_type_display()}<br>'
-                f'Commission: Normal {rates["normal"]}%, Digital {rates["digital"]}%'
+                f'Commission: Normal {rates["normal"]}%, Digital {rates["digital"]}%',
+                extra_tags='safe'
             )
-            return redirect('accounts:pc_member_detail', pc_code=member.pc_code)
+            return redirect('accounts:pc_dashboard')
             
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
             messages.error(request, f"Error creating PC member: {str(e)}")
+            # Log the full error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"PC Member creation error: {error_details}")
             return redirect('accounts:pc_member_create')
     
     # GET request - show form
