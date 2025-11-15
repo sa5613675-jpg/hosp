@@ -72,63 +72,81 @@ def pc_member_create(request):
         return redirect('accounts:dashboard')
     
     if request.method == 'POST':
-        member_type = request.POST.get('member_type', '').strip()
-        name = request.POST.get('name', '').strip()
-        phone = request.POST.get('phone', '').strip()
-        email = request.POST.get('email', '').strip()
-        address = request.POST.get('address', '').strip()
-        notes = request.POST.get('notes', '').strip()
-        
-        # Validate required fields
-        if not name:
-            messages.error(request, "Name is required!")
-            return redirect('accounts:pc_dashboard')
-            
-        if not phone:
-            messages.error(request, "Phone is required!")
-            return redirect('accounts:pc_dashboard')
-        
-        if not member_type:
-            messages.error(request, "Category is required! Please select a member type.")
-            return redirect('accounts:pc_dashboard')
-        
-        # Set fixed commission percentage based on member type
-        commission_map = {
-            'GENERAL': 30,
-            'LIFETIME': 35,
-            'PREMIUM': 50
-        }
-        
-        if member_type not in commission_map:
-            messages.error(request, f"Invalid member type: '{member_type}'. Please select from the dropdown.")
-            return redirect('accounts:pc_dashboard')
-        
-        commission_percentage = commission_map[member_type]
-        
-        # Create PC member
         try:
+            # Get form data
+            member_type = request.POST.get('member_type', '').strip().upper()
+            name = request.POST.get('name', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            email = request.POST.get('email', '').strip()
+            address = request.POST.get('address', '').strip()
+            notes = request.POST.get('notes', '').strip()
+            
+            # Validate required fields
+            errors = []
+            if not name:
+                errors.append("Name is required")
+            if not phone:
+                errors.append("Phone number is required")
+            if not member_type:
+                errors.append("Member type is required")
+            
+            # Validate member type
+            valid_types = ['GENERAL', 'LIFETIME', 'PREMIUM']
+            if member_type and member_type not in valid_types:
+                errors.append(f"Invalid member type. Must be one of: {', '.join(valid_types)}")
+            
+            # Check for duplicate phone
+            if phone and PCMember.objects.filter(phone=phone).exists():
+                errors.append(f"Phone number {phone} is already registered")
+            
+            # If there are errors, show them and redirect
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+                return redirect('accounts:pc_member_create')
+            
+            # Set default commission rates based on member type
+            commission_rates = {
+                'GENERAL': {'normal': 15.00, 'digital': 20.00, 'other': 15.00},
+                'LIFETIME': {'normal': 20.00, 'digital': 25.00, 'other': 20.00},
+                'PREMIUM': {'normal': 25.00, 'digital': 30.00, 'other': 25.00},
+            }
+            
+            rates = commission_rates.get(member_type, commission_rates['GENERAL'])
+            
+            # Create PC member
             member = PCMember.objects.create(
                 member_type=member_type,
                 name=name,
                 phone=phone,
                 email=email,
                 address=address,
-                commission_percentage=commission_percentage,
+                commission_percentage=rates['other'],
+                normal_test_commission=rates['normal'],
+                digital_test_commission=rates['digital'],
                 notes=notes,
                 created_by=request.user
             )
             
-            messages.success(request, f'PC Member created successfully! Code: {member.pc_code} - {member.name} ({commission_percentage}% commission)')
-            return redirect('accounts:pc_member_list', member_type=member_type)
+            messages.success(
+                request,
+                f'✅ PC Member created successfully!<br>'
+                f'Code: <strong>{member.pc_code}</strong><br>'
+                f'Name: {member.name}<br>'
+                f'Type: {member.get_member_type_display()}<br>'
+                f'Commission: Normal {rates["normal"]}%, Digital {rates["digital"]}%'
+            )
+            return redirect('accounts:pc_member_detail', pc_code=member.pc_code)
+            
         except Exception as e:
-            messages.error(request, f"Error creating member: {str(e)}")
-            return redirect('accounts:pc_dashboard')
+            messages.error(request, f"Error creating PC member: {str(e)}")
+            return redirect('accounts:pc_member_create')
     
-    # Default commission percentages
+    # GET request - show form
     default_commissions = {
-        'GENERAL': 30,
-        'LIFETIME': 35,
-        'PREMIUM': 50,
+        'GENERAL': {'normal': 15.00, 'digital': 20.00, 'other': 15.00},
+        'LIFETIME': {'normal': 20.00, 'digital': 25.00, 'other': 20.00},
+        'PREMIUM': {'normal': 25.00, 'digital': 30.00, 'other': 25.00},
     }
     
     context = {
@@ -396,7 +414,7 @@ def pc_mark_paid(request, pc_code):
 
 @login_required
 def pc_member_delete(request, pc_code):
-    """Delete PC member (Admin only)"""
+    """Deactivate PC member (Admin only) - Never permanently delete for audit trail"""
     if not request.user.is_admin:
         messages.error(request, "Access denied. Admin only.")
         return redirect('accounts:dashboard')
@@ -405,26 +423,38 @@ def pc_member_delete(request, pc_code):
     member_type = member.member_type
     member_name = member.name
     
-    # Check if member has transactions
+    # Check member status
     transaction_count = member.transactions.count()
+    has_due_amount = member.due_amount > 0
+    total_earned = member.total_commission_earned
     
     if request.method == 'POST':
-        # Confirm deletion
-        if transaction_count > 0:
-            # Has transactions - just deactivate instead of delete
+        # Always deactivate, never permanently delete (for audit trail)
+        if member.is_active:
             member.is_active = False
             member.save()
-            messages.warning(
-                request,
-                f'PC Member "{member_name}" ({pc_code}) has {transaction_count} transactions. '
-                f'Member has been deactivated instead of deleted for record keeping.'
-            )
-        else:
-            # No transactions - safe to delete
-            member.delete()
+            
+            # Build deactivation reason message
+            reasons = []
+            if transaction_count > 0:
+                reasons.append(f'{transaction_count} transaction(s)')
+            if has_due_amount:
+                reasons.append(f'৳{member.due_amount:.2f} unpaid commission')
+            if total_earned > 0:
+                reasons.append(f'৳{total_earned:.2f} total earned')
+            
+            reason_text = ', '.join(reasons) if reasons else 'No transaction history'
+            
             messages.success(
                 request,
-                f'PC Member "{member_name}" ({pc_code}) has been permanently deleted.'
+                f'✅ PC Member "{member_name}" ({pc_code}) has been deactivated.<br>'
+                f'<strong>Reason:</strong> {reason_text}<br>'
+                f'<em>Member record preserved for audit trail.</em>'
+            )
+        else:
+            messages.info(
+                request,
+                f'PC Member "{member_name}" ({pc_code}) is already inactive.'
             )
         
         return redirect('accounts:pc_member_list', member_type=member_type)
@@ -434,6 +464,8 @@ def pc_member_delete(request, pc_code):
         'member': member,
         'transaction_count': transaction_count,
         'has_transactions': transaction_count > 0,
+        'has_due_amount': has_due_amount,
+        'total_earned': total_earned,
     }
     
     return render(request, 'accounts/pc_member_delete_confirm.html', context)
