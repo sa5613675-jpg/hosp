@@ -168,29 +168,31 @@ class PCMember(models.Model):
         if not self.pc_code:
             # Generate 6-digit PC code based on member type
             # Format: [Type Digit][5-digit Sequential Number]
+            # Example: 100001, 200001, 300001
             if self.member_type == 'GENERAL':
                 prefix = '1'
                 last_member = PCMember.objects.filter(
                     pc_code__startswith='1'
-                ).order_by('pc_code').last()
+                ).order_by('-pc_code').last()
             elif self.member_type == 'LIFETIME':
                 prefix = '2'
                 last_member = PCMember.objects.filter(
                     pc_code__startswith='2'
-                ).order_by('pc_code').last()
+                ).order_by('-pc_code').last()
             elif self.member_type == 'PREMIUM':
                 prefix = '3'
                 last_member = PCMember.objects.filter(
                     pc_code__startswith='3'
-                ).order_by('pc_code').last()
+                ).order_by('-pc_code').last()
             else:
                 prefix = '9'
                 last_member = None
             
-            if last_member:
+            if last_member and len(last_member.pc_code) == 6:
                 last_number = int(last_member.pc_code[1:])
                 new_number = last_number + 1
             else:
+                # Start from 00001 for first member of this type
                 new_number = 1
             
             # 6-digit code: 1 digit prefix + 5 digit number (e.g., 100001, 200001, 300001)

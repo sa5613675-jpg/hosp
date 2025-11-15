@@ -48,17 +48,11 @@
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> <strong>Note:</strong> PC codes are only for lab tests, not doctor consultations.
                         </div>
-                            <strong>Admin Revenue:</strong> ৳<span id="adminRevenue">0</span>
-                        </div>
-
-                        <div class="alert alert-danger" id="pcError" style="display: none;">
-                            <i class="bi bi-exclamation-triangle"></i> Invalid or inactive PC code
-                        </div>
 
                         <!-- Final Amount -->
                         <div class="alert alert-primary">
                             <h4 class="mb-0">
-                                <strong>Final Amount to Pay: ৳<span id="finalAmount">{{ appointment.consultation_fee }}</span></strong>
+                                <strong>Final Amount to Pay: ৳{{ appointment.consultation_fee }}</strong>
                             </h4>
                         </div>
 
@@ -78,85 +72,10 @@
 </div>
 
 <script>
-const originalTotal = {{ appointment.consultation_fee }};
-let pcData = null;
-
-// Verify PC Code
-document.getElementById('verifyPC').addEventListener('click', function() {
-    const pcCode = document.getElementById('pcCode').value.trim().toUpperCase();
-    
-    if (!pcCode) {
-        document.getElementById('pcError').style.display = 'none';
-        document.getElementById('pcInfo').style.display = 'none';
-        pcData = null;
-        calculateBilling();
-        return;
-    }
-    
-    fetch(`/accounts/api/pc-lookup/?code=${pcCode}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                pcData = data;
-                document.getElementById('pcInfo').style.display = 'block';
-                document.getElementById('pcError').style.display = 'none';
-                document.getElementById('pcName').textContent = data.name;
-                document.getElementById('pcCodeDisplay').textContent = data.pc_code;
-                document.getElementById('pcCommission').textContent = data.commission_percentage;
-                calculateBilling();
-            } else {
-                pcData = null;
-                document.getElementById('pcInfo').style.display = 'none';
-                document.getElementById('pcError').style.display = 'block';
-                calculateBilling();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            pcData = null;
-            document.getElementById('pcError').textContent = 'Error verifying code';
-            document.getElementById('pcError').style.display = 'block';
-        });
-});
-
-document.getElementById('pcCode').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('verifyPC').click();
-    }
-});
-
-document.getElementById('pcCode').addEventListener('input', function() {
-    if (pcData) {
-        document.getElementById('pcInfo').style.display = 'none';
-        document.getElementById('pcError').style.display = 'none';
-        pcData = null;
-        calculateBilling();
-    }
-});
-
-function calculateBilling() {
-    const commissionPercent = pcData ? parseFloat(pcData.commission_percentage) : 0;
-    
-    // No discount for appointments - use original amount
-    const finalAmount = originalTotal;
-    const commissionAmount = finalAmount * (commissionPercent / 100);
-    const adminRevenue = finalAmount - commissionAmount;
-    
-    document.getElementById('finalAmount').textContent = finalAmount.toFixed(2);
-    
-    if (commissionPercent > 0 && pcData) {
-        document.getElementById('commissionAmount').textContent = commissionAmount.toFixed(2);
-        document.getElementById('adminRevenue').textContent = adminRevenue.toFixed(2);
-    }
-}
-
-calculateBilling();
-
 document.getElementById('billingForm').addEventListener('submit', function(e) {
-    const finalAmount = parseFloat(document.getElementById('finalAmount').textContent);
-    return confirm('Confirm payment of ৳' + finalAmount.toFixed(2) + '?');
+    return confirm('Confirm payment of ৳{{ appointment.consultation_fee }}?');
 });
 </script>
 
 {% endblock %}
+
