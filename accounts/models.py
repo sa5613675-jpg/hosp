@@ -85,29 +85,13 @@ class PCMember(models.Model):
     address = models.TextField(blank=True)
     
     # Commission rates for different services
-    # Commission rates
     commission_percentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=15.00,
-        help_text="Default commission percentage"
+        help_text="Default commission percentage (for other services)"
     )
     
-    normal_test_commission = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=15.00,
-        help_text="Commission percentage for normal tests"
-    )
-    
-    digital_test_commission = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=20.00,
-        help_text="Commission percentage for digital tests"
-    )
-    
-    # Test-specific commission rates
     normal_test_commission = models.DecimalField(
         max_digits=5,
         decimal_places=2,
